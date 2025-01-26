@@ -1,13 +1,16 @@
 import { Component } from '@angular/core';
 import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from '@angular/forms';
-import { Router } from '@angular/router';
+import {Router, RouterLink} from '@angular/router';
+import {CommonModule} from '@angular/common';
 
 @Component({
   selector: 'app-login',
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.css'],
   imports: [
-    ReactiveFormsModule
+    ReactiveFormsModule,
+    RouterLink,
+    CommonModule
   ]
 })
 export class LoginComponent {
@@ -24,7 +27,7 @@ export class LoginComponent {
     if (this.loginForm.valid) {
       const { email, password } = this.loginForm.value;
 
-      // Simulate login (replace with actual authentication service)
+      // Simulate login - temporary before connecting to the database
       if (email === 'user@example.com' && password === 'password123') {
         alert('Login successful!');
         this.router.navigate(['/flights/search']); // Redirect to flight search page

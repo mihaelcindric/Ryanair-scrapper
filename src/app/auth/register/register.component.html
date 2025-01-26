@@ -1,1 +1,121 @@
-<p>register works!</p>
+<div class="register-container">
+  <div class="register-box">
+    <h2>Register</h2>
+    <form (ngSubmit)="onSubmit()" [formGroup]="registerForm">
+      <!-- First Name -->
+      <div class="form-group">
+        <label for="first_name">First Name</label>
+        <input
+          id="first_name"
+          type="text"
+          formControlName="first_name"
+          placeholder="Enter your first name"
+        />
+        <div *ngIf="registerForm.get('first_name')?.invalid && registerForm.get('first_name')?.touched" class="error">
+          First name is required.
+        </div>
+      </div>
+
+      <!-- Last Name -->
+      <div class="form-group">
+        <label for="last_name">Last Name</label>
+        <input
+          id="last_name"
+          type="text"
+          formControlName="last_name"
+          placeholder="Enter your last name"
+        />
+        <div *ngIf="registerForm.get('last_name')?.invalid && registerForm.get('last_name')?.touched" class="error">
+          Last name is required.
+        </div>
+      </div>
+
+      <!-- Date of Birth -->
+      <div class="form-group">
+        <label for="date_of_birth">Date of Birth</label>
+        <input
+          id="date_of_birth"
+          type="date"
+          formControlName="date_of_birth"
+        />
+        <div *ngIf="registerForm.get('date_of_birth')?.invalid && registerForm.get('date_of_birth')?.touched" class="error">
+          Date of birth is required.
+        </div>
+      </div>
+
+      <!-- Username -->
+      <div class="form-group">
+        <label for="username">Username</label>
+        <input
+          id="username"
+          type="text"
+          formControlName="username"
+          placeholder="Enter your username"
+        />
+        <div *ngIf="registerForm.get('username')?.invalid && registerForm.get('username')?.touched" class="error">
+          Username is required.
+        </div>
+      </div>
+
+      <!-- Email -->
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input
+          id="email"
+          type="email"
+          formControlName="email"
+          placeholder="Enter your email"
+        />
+        <div *ngIf="registerForm.get('email')?.invalid && registerForm.get('email')?.touched" class="error">
+          Valid email is required.
+        </div>
+      </div>
+
+      <!-- Password -->
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input
+          id="password"
+          type="password"
+          formControlName="password"
+          placeholder="Enter your password"
+        />
+        <div *ngIf="registerForm.get('password')?.invalid && registerForm.get('password')?.touched" class="error">
+          Password is required (minimum 6 characters).
+        </div>
+      </div>
+
+      <!-- Repeat Password -->
+      <div class="form-group">
+        <label for="repeat_password">Repeat Password</label>
+        <input
+          id="repeat_password"
+          type="password"
+          formControlName="repeat_password"
+          placeholder="Repeat your password"
+        />
+        <div *ngIf="registerForm.hasError('passwordMismatch') && registerForm.get('repeat_password')?.touched" class="error">
+          Passwords do not match.
+        </div>
+      </div>
+
+      <!-- Profile Picture URL -->
+      <div class="form-group">
+        <label for="profile_picture_url">Profile Picture URL (optional)</label>
+        <input
+          id="profile_picture_url"
+          type="url"
+          formControlName="profile_picture_url"
+          placeholder="Enter a URL for your profile picture (optional)"
+        />
+      </div>
+
+      <button type="submit" [disabled]="registerForm.invalid">Register</button>
+    </form>
+
+    <p class="login-link">
+      Already have an account?
+      <a routerLink="/auth/login">Login here!</a>
+    </p>
+  </div>
+</div>
