@@ -21,7 +21,6 @@ export class AppComponent {
   constructor(private router: Router) {}
 
   isAuthPage(): boolean {
-    // Provjeri URL za login i register rute
     return this.router.url === '/auth/login' || this.router.url === '/auth/register';
   }
 }
