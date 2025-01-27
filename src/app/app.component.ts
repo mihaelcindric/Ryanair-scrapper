@@ -3,6 +3,7 @@ import {Router, RouterOutlet} from '@angular/router';
 import {FooterComponent} from './shared/footer/footer.component';
 import {HeaderComponent} from './shared/header/header.component';
 import {CommonModule, NgIf} from '@angular/common';
+import {HttpClient, HttpClientModule} from '@angular/common/http';
 
 @Component({
   selector: 'app-root',
@@ -12,7 +13,8 @@ import {CommonModule, NgIf} from '@angular/common';
     FooterComponent,
     HeaderComponent,
     RouterOutlet,
-    CommonModule
+    CommonModule,
+    HttpClientModule
   ]
 })
 export class AppComponent {
