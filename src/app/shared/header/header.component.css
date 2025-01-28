@@ -1,0 +1,60 @@
+/* Header styling */
+.navbar {
+  background-color: #f1c933; /* Žuta pozadina */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 20px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Logo styling */
+.logo-container {
+  display: flex;
+  align-items: center;
+}
+
+.header-logo {
+  height: 50px; /* Prilagodi visinu logotipa prema potrebi */
+  width: auto;
+}
+
+/* Navigation container */
+.navbar-container {
+  display: flex;
+  align-items: center;
+  gap: 20px; /* Razmak između linkova */
+}
+
+/* Navigation links */
+.nav-link {
+  text-decoration: none;
+  color: white; /* Bijela boja teksta */
+  font-weight: bold;
+  padding: 10px 15px;
+  transition: color 0.3s ease;
+}
+
+.nav-link:hover {
+  color: #333; /* Tamna boja pri hoveru */
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .navbar {
+    flex-direction: column;
+  }
+
+  .navbar-container {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .nav-link {
+    margin: 5px 0;
+  }
+
+  .header-logo {
+    height: 40px; /* Manja slika na manjim ekranima */
+  }
+}

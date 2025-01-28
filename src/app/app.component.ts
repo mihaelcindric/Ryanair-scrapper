@@ -4,6 +4,7 @@ import {FooterComponent} from './shared/footer/footer.component';
 import {HeaderComponent} from './shared/header/header.component';
 import {CommonModule, NgIf} from '@angular/common';
 import {HttpClient, HttpClientModule} from '@angular/common/http';
+import {Title} from '@angular/platform-browser';
 
 @Component({
   selector: 'app-root',
@@ -18,6 +19,7 @@ import {HttpClient, HttpClientModule} from '@angular/common/http';
   ]
 })
 export class AppComponent {
+  title = 'ryanair-scrapper'
   constructor(private router: Router) {}
 
   isAuthPage(): boolean {

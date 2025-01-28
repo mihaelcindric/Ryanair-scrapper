@@ -1,1 +1,11 @@
-<p>header works!</p>
+<header class="navbar">
+  <div class="logo-container">
+    <img ngSrc="assets/images/ryanair-header.png" alt="Ryanair Scrapper Logo" class="header-logo" height="350"
+         width="857">
+  </div>
+  <nav class="navbar-container">
+    <a routerLink="/flights/search" routerLinkActive="active-link" class="nav-link">Find Flights</a>
+    <a routerLink="/auth/login" routerLinkActive="active-link" class="nav-link">Login</a>
+    <a routerLink="/admin/dashboard" routerLinkActive="active-link" class="nav-link">Dashboard</a>
+  </nav>
+</header>
