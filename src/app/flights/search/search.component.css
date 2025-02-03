@@ -1,0 +1,106 @@
+/* Search Container */
+.search-container {
+  padding: 20px;
+  background-color: #f9f9f9;
+}
+
+/* Search Section */
+.search-section {
+  background-color: #ffffff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+}
+
+.search-section h2 {
+  color: #073590;
+  margin-bottom: 15px;
+  text-align: center;
+}
+
+.info-message {
+  font-size: 14px;
+  color: #555;
+  margin-bottom: 10px;
+  text-align: center;
+  padding-bottom: 30px;
+}
+
+
+/* Horizontal Form Styling */
+.search-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: space-between;
+}
+
+.form-group {
+  flex: 1 1 calc(33% - 20px);
+  min-width: 150px;
+}
+
+label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 5px;
+  font-size: 14px;
+}
+
+input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+button {
+  background-color: #f1c933;
+  color: #073590;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  align-self: flex-end;
+}
+
+button:disabled {
+  background-color: #ddd;
+  color: #666;
+  cursor: not-allowed;
+}
+
+/* Results Section */
+.results-section {
+  margin-top: 20px;
+}
+
+.result-container {
+  background-color: #ffffff;
+  margin-bottom: 20px;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.result-summary {
+  margin-bottom: 15px;
+}
+
+.flight-group {
+  margin-bottom: 20px;
+}
+
+.flight-group h3 {
+  color: #073590;
+}
+
+.flight-details {
+  background-color: #f1c933;
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 10px;
+}
