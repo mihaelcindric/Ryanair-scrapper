@@ -1,11 +1,31 @@
 <header class="navbar">
   <div class="logo-container">
-    <img ngSrc="assets/images/ryanair-header.png" alt="Ryanair Scrapper Logo" class="header-logo" height="350"
-         width="857">
+    <img src="assets/images/ryanair-header.png" alt="Ryanair Scrapper Logo" class="header-logo">
   </div>
   <nav class="navbar-container">
     <a routerLink="/flights/search" routerLinkActive="active-link" class="nav-link">Find Flights</a>
-    <a routerLink="/auth/login" routerLinkActive="active-link" class="nav-link">Login</a>
-    <a routerLink="/admin/dashboard" routerLinkActive="active-link" class="nav-link">Dashboard</a>
+
+    <!-- Dashboard link is displayed only to admins -->
+    <ng-container *ngIf="(currentUser$ | async)?.is_admin">
+      <a routerLink="/admin/dashboard" routerLinkActive="active-link" class="nav-link">Dashboard</a>
+    </ng-container>
+
+    <!-- Login is displayed to guest users -->
+    <ng-container *ngIf="!(currentUser$ | async)">
+      <a routerLink="/auth/login" routerLinkActive="active-link" class="nav-link">Login</a>
+    </ng-container>
+
+    <!-- To users, their profile is displayed -->
+    <ng-container *ngIf="currentUser$ | async as user">
+      <div class="user-menu" (mouseenter)="toggleDropdown()" (mouseleave)="toggleDropdown()">
+        <img [src]="user.profile_picture_url || 'assets/images/default-profile.png'" alt="Profile Picture" class="profile-picture">
+        <span class="username">{{ user.username }}</span>
+        <div *ngIf="dropdownOpen" class="dropdown-menu">
+          <a routerLink="/flights/profile" class="dropdown-item">Profile</a>
+          <a routerLink="/flights/saved-travels" class="dropdown-item">Saved Travels</a>
+          <a (click)="logout()" class="dropdown-item logout">Logout</a>
+        </div>
+      </div>
+    </ng-container>
   </nav>
 </header>

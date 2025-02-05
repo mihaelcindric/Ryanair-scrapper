@@ -1,60 +1,135 @@
-/* Header styling */
+/* HEADER STYLING */
 .navbar {
-  background-color: #f1c933; /* Žuta pozadina */
+  background-color: #f1c933;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 20px;
+  height: 60px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 0 20px;
+  position: relative;
 }
 
-/* Logo styling */
+/* LOGO */
 .logo-container {
   display: flex;
   align-items: center;
 }
 
 .header-logo {
-  height: 50px; /* Prilagodi visinu logotipa prema potrebi */
+  height: 50px;
   width: auto;
 }
 
-/* Navigation container */
+/* NAVIGATION */
 .navbar-container {
   display: flex;
   align-items: center;
-  gap: 20px; /* Razmak između linkova */
+  height: 100%;
 }
 
-/* Navigation links */
+/* NAVIGATION LINKS */
 .nav-link {
   text-decoration: none;
-  color: white; /* Bijela boja teksta */
+  color: white;
   font-weight: bold;
-  padding: 10px 15px;
-  transition: color 0.3s ease;
+  padding: 0 20px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.3s ease;
 }
 
 .nav-link:hover {
-  color: #333; /* Tamna boja pri hoveru */
+  background: rgba(0, 0, 0, 0.2);
 }
 
-/* Responsive design */
+/* Current page */
+.active-link {
+  background: #073590;
+  color: white !important;
+}
+
+/* USER INFO (PROFIL) */
+.user-menu {
+  display: flex;
+  align-items: center;
+  position: relative;
+  padding: 0 20px;
+  height: 60px;
+  cursor: pointer;
+}
+
+.profile-picture {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.username {
+  font-weight: bold;
+  color: #06266a;
+  margin-left: 10px;
+}
+
+/* DROPDOWN MENU */
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  width: 180px;
+  display: flex;
+  flex-direction: column;
+  z-index: 10;
+}
+
+.dropdown-item {
+  padding: 10px 15px;
+  text-decoration: none;
+  color: #073590;
+  transition: background 0.3s ease;
+}
+
+.dropdown-item:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.logout {
+  color: red;
+  font-weight: bold;
+}
+
+/* RESPONSIVE DESIGN */
 @media (max-width: 768px) {
   .navbar {
     flex-direction: column;
+    height: auto;
   }
 
   .navbar-container {
     flex-direction: column;
-    text-align: center;
+    width: 100%;
   }
 
   .nav-link {
-    margin: 5px 0;
+    width: 100%;
+    text-align: center;
+    height: 50px;
   }
 
-  .header-logo {
-    height: 40px; /* Manja slika na manjim ekranima */
+  .user-menu {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .dropdown-menu {
+    width: 100%;
+    text-align: center;
   }
 }
