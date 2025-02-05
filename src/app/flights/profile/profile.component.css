@@ -1,0 +1,109 @@
+.profile-container {
+  max-width: 500px;
+  margin: 40px auto;
+  background: #ffffff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+h2 {
+  text-align: center;
+  color: #073590;
+  margin-bottom: 20px;
+}
+
+/* Profile info */
+.profile-info {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.profile-picture {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.profile-details {
+  flex: 1;
+}
+
+.profile-details p {
+  margin: 5px 0;
+  font-size: 14px;
+}
+
+strong {
+  color: #3369f1;
+}
+
+/* Editing form */
+.edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+label {
+  font-weight: bold;
+  color: #073590;
+}
+
+input {
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+  width: 100%;
+}
+
+.form-buttons {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.edit-btn {
+  background-color: #f1c933;
+  color: #073590;
+}
+
+.edit-btn:hover {
+  background-color: #d4aa00;
+}
+
+.logout-btn {
+  background-color: #d9534f;
+  color: white;
+  display: block;
+  width: 100%;
+  margin-top: 20px;
+  text-align: center;
+}
+
+.logout-btn:hover {
+  background-color: #c9302c;
+}
+
+.cancel-btn {
+  background-color: #6c757d;
+  color: white;
+}
+
+.cancel-btn:hover {
+  background-color: #5a6268;
+}

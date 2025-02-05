@@ -23,7 +23,6 @@ export class AuthService {
   public currentUser$: Observable<User | null>;
 
   constructor(private http: HttpClient) {
-    // Pokupi korisnika iz localStorage-a ako postoji
     const savedUser = localStorage.getItem('currentUser');
     this.currentUserSubject = new BehaviorSubject<User | null>(savedUser ? JSON.parse(savedUser) : null);
     this.currentUser$ = this.currentUserSubject.asObservable();
@@ -34,9 +33,7 @@ export class AuthService {
       .pipe(
         tap(response => {
           if (response.success && response.user) {
-            // Spremi korisnika u BehaviorSubject i localStorage
-            this.currentUserSubject.next(response.user);
-            localStorage.setItem('currentUser', JSON.stringify(response.user));
+            this.setCurrentUser(response.user);
           }
         })
       );
@@ -51,21 +48,19 @@ export class AuthService {
     localStorage.removeItem('currentUser');
   }
 
-  loadUserFromStorage(): void {
-    const savedUser = localStorage.getItem('currentUser');
-    if (savedUser) {
-      this.currentUserSubject.next(JSON.parse(savedUser));
-    }
+  updateProfile(updatedUser: User): Observable<{ success: boolean, message: string }> {
+    return this.http.put<{ success: boolean, message: string }>(`${this.baseUrl}/auth/update-profile`, updatedUser).pipe(
+      tap(response => {
+        if (response.success) {
+          this.setCurrentUser(updatedUser);
+        }
+      })
+    );
   }
 
-  updateProfile(updatedUser: User): Observable<{ success: boolean }> {
-    return this.http.put<{ success: boolean }>(`${this.baseUrl}/auth/update-profile`, updatedUser);
+  setCurrentUser(user: User) {
+    console.log("🔄 Setting new current user:", user);
+    this.currentUserSubject.next(user);
+    localStorage.setItem('currentUser', JSON.stringify(user));
   }
-
-  refreshUser(): void {
-    this.getCurrentUser().subscribe(user => {
-      this.currentUserSubject.next(user);
-    });
-  }
-
 }

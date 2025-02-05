@@ -36,7 +36,6 @@ export class LoginComponent {
       this.authService.login(email, password).subscribe(
         (response) => {
           if (response.success) {
-            alert('Login successful!');
             this.router.navigate(['/flights/search']);
           } else {
             alert('Invalid email or password.');

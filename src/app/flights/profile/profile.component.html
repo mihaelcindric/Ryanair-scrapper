@@ -1,0 +1,55 @@
+<div class="profile-container">
+  <h2>My Profile</h2>
+
+  <div class="profile-info">
+    <img [src]="user?.profile_picture_url || 'assets/images/default-profile.png'"
+         alt="Profile Picture" class="profile-picture" (error)="setDefaultProfilePicture($event)">
+
+    <div class="profile-details">
+      <p><strong>First Name:</strong> {{ user?.first_name }}</p>
+      <p><strong>Last Name:</strong> {{ user?.last_name }}</p>
+      <p><strong>Username:</strong> {{ user?.username }}</p>
+      <p><strong>Email:</strong> {{ user?.email }}</p>
+      <p><strong>Date of Birth:</strong> {{ user?.date_of_birth | date: 'yyyy-MM-dd' }}</p>
+    </div>
+
+    <button class="edit-btn" (click)="toggleEdit()">Edit</button>
+  </div>
+
+  <!-- Editing data form -->
+  <form *ngIf="isEditing" [formGroup]="profileForm" (ngSubmit)="saveChanges()" class="edit-form">
+    <label>First Name</label>
+    <input type="text" formControlName="first_name">
+
+    <label>Last Name</label>
+    <input type="text" formControlName="last_name">
+
+    <label>Username</label>
+    <input type="text" formControlName="username">
+
+    <label>Email</label>
+    <input type="email" formControlName="email">
+
+    <label>Date of Birth</label>
+    <input type="date" formControlName="date_of_birth">
+
+    <label>Profile Picture URL</label>
+    <input type="text" formControlName="profile_picture_url">
+
+    <hr>
+
+    <!-- Passwords -->
+    <label>Current Password (Required)</label>
+    <input type="password" formControlName="current_password">
+
+    <label>New Password (Optional)</label>
+    <input type="password" formControlName="new_password">
+
+    <div class="form-buttons">
+      <button type="submit" [disabled]="profileForm.invalid">Save</button>
+      <button type="button" class="cancel-btn" (click)="toggleEdit()">Cancel</button>
+    </div>
+  </form>
+
+  <button class="logout-btn" (click)="logout()">Logout</button>
+</div>

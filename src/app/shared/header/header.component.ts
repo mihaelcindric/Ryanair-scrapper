@@ -26,17 +26,24 @@ export class HeaderComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.authService.loadUserFromStorage();
-    this.currentUser$ = this.authService.getCurrentUser();
+    this.authService.currentUser$.subscribe(user => {
+      this.currentUser$ = this.authService.getCurrentUser();
+    });
   }
 
   toggleDropdown(): void {
     this.dropdownOpen = !this.dropdownOpen;
   }
 
+
   logout(): void {
     this.authService.logout();
     this.router.navigate(['/auth/login']);
     this.dropdownOpen = false;
+  }
+
+  setDefaultProfilePicture(event: Event): void {
+    const imgElement = event.target as HTMLImageElement;
+    imgElement.src = 'assets/images/default-profile.png';
   }
 }
