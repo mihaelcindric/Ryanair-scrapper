@@ -61,34 +61,166 @@
   </section>
 
   <section class="results-section" *ngIf="searchResults && searchResults.length > 0">
-    <h2>Search Results</h2>
-    <div *ngFor="let result of searchResults" class="result-container">
-      <div class="result-summary">
-        <p><strong>Total Price:</strong> {{ result.total_price | currency }}</p>
-        <p><strong>Total Duration:</strong> {{ result.total_duration }} hours</p>
-      </div>
+    <!-- OUTBOUND TRAVELS -->
+    <section class="results-section" *ngIf="outboundTravels.length > 0">
+      <h2>Outbound Travels</h2>
 
-      <!-- Outbound Flights -->
-      <div class="flight-group">
-        <h3>Outbound Flights</h3>
-        <div *ngFor="let flight of result.outbound" class="flight-details">
-          <p><strong>From:</strong> {{ flight.from }}</p>
-          <p><strong>To:</strong> {{ flight.to }}</p>
-          <p><strong>Price:</strong> {{ flight.price | currency }}</p>
-          <p><strong>Duration:</strong> {{ flight.duration }} hours</p>
+      <!-- Cheapest outbound travels -->
+      <div class="subsection">
+        <h3>Cheapest Outbound Travels</h3>
+        <div class="travel-cards">
+          <div *ngFor="let travel of outboundCheapest" class="travel-card" (click)="openTravelDetail(travel)">
+            <!-- Header: City info on left, Price on right -->
+            <div class="travel-card-header">
+              <div class="city-info">
+                <h3>{{ travel.start_city }} → {{ travel.destination_city }}</h3>
+              </div>
+              <div class="price-info">
+                <p class="price">{{ travel.total_price | currency:'EUR' }}</p>
+              </div>
+            </div>
+
+            <!-- Subheader: Travel Period and Total Duration -->
+            <div class="travel-card-subheader">
+              <div class="period-info">
+                <p><strong>{{ travel.period_start | date:'yyyy-MM-dd' }} → {{ travel.period_end | date:'yyyy-MM-dd' }}</strong></p>
+              </div>
+              <div class="duration-info">
+                <p>Duration:<strong> {{ formatDuration(travel.total_duration) }} h</strong> </p>
+              </div>
+            </div>
+
+            <!-- Additional details -->
+            <div class="travel-card-details">
+              <p><strong>Start Airport:</strong> {{ travel.start_airport }} ({{ travel.start_country }})</p>
+              <p><strong>Destination Airport:</strong> {{ travel.destination_airport }} ({{ travel.destination_country }})</p>
+              <p><strong>Flight Time:</strong> {{ formatMinutesToTime(travel.total_flight_time) }}</p>
+              <p><strong>Wait Time:</strong> {{ formatMinutesToTime(travel.total_wait_time) }}</p>
+              <p><strong>Flights:</strong> {{ travel.number_of_flights }}</p>
+              <p><strong>All Airports:</strong> {{ travel.all_airports_in_order }}</p>
+            </div>
+          </div>
         </div>
       </div>
 
-      <!-- Return Flights -->
-      <div class="flight-group">
-        <h3>Return Flights</h3>
-        <div *ngFor="let flight of result.return" class="flight-details">
-          <p><strong>From:</strong> {{ flight.from }}</p>
-          <p><strong>To:</strong> {{ flight.to }}</p>
-          <p><strong>Price:</strong> {{ flight.price | currency }}</p>
-          <p><strong>Duration:</strong> {{ flight.duration }} hours</p>
+      <!-- Shortest outbound travels -->
+      <div class="subsection">
+        <h3>Shortest Outbound Travels</h3>
+        <div class="travel-cards">
+          <div *ngFor="let travel of outboundShortest" class="travel-card" (click)="openTravelDetail(travel)">
+            <!-- Header: City info on left, Price on right -->
+            <div class="travel-card-header">
+              <div class="city-info">
+                <h3>{{ travel.start_city }} → {{ travel.destination_city }}</h3>
+              </div>
+              <div class="price-info">
+                <p class="price">{{ travel.total_price | currency:'EUR' }}</p>
+              </div>
+            </div>
+
+            <!-- Subheader: Travel Period and Total Duration -->
+            <div class="travel-card-subheader">
+              <div class="period-info">
+                <p><strong>{{ travel.period_start | date:'yyyy-MM-dd' }} → {{ travel.period_end | date:'yyyy-MM-dd' }}</strong></p>
+              </div>
+              <div class="duration-info">
+                <p>Duration:<strong> {{ formatDuration(travel.total_duration) }} h</strong> </p>
+              </div>
+            </div>
+
+            <!-- Additional details -->
+            <div class="travel-card-details">
+              <p><strong>Start Airport:</strong> {{ travel.start_airport }} ({{ travel.start_country }})</p>
+              <p><strong>Destination Airport:</strong> {{ travel.destination_airport }} ({{ travel.destination_country }})</p>
+              <p><strong>Flight Time:</strong> {{ formatMinutesToTime(travel.total_flight_time) }}</p>
+              <p><strong>Wait Time:</strong> {{ formatMinutesToTime(travel.total_wait_time) }}</p>
+              <p><strong>Flights:</strong> {{ travel.number_of_flights }}</p>
+              <p><strong>All Airports:</strong> {{ travel.all_airports_in_order }}</p>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
+    </section>
+
+    <!-- RETURN TRAVELS -->
+    <section class="results-section" *ngIf="returnTravels.length > 0">
+      <h2>Return Travels</h2>
+
+      <!-- Cheapest return travels -->
+      <div class="subsection">
+        <h3>Cheapest Return Travels</h3>
+        <div class="travel-cards">
+          <div *ngFor="let travel of returnCheapest" class="travel-card" (click)="openTravelDetail(travel)">
+            <!-- Header: City info on left, Price on right -->
+            <div class="travel-card-header">
+              <div class="city-info">
+                <h3>{{ travel.start_city }} → {{ travel.destination_city }}</h3>
+              </div>
+              <div class="price-info">
+                <p class="price">{{ travel.total_price | currency:'EUR' }}</p>
+              </div>
+            </div>
+
+            <!-- Subheader: Travel Period and Total Duration -->
+            <div class="travel-card-subheader">
+              <div class="period-info">
+                <p><strong>{{ travel.period_start | date:'yyyy-MM-dd' }} → {{ travel.period_end | date:'yyyy-MM-dd' }}</strong></p>
+              </div>
+              <div class="duration-info">
+                <p>Duration:<strong> {{ formatDuration(travel.total_duration) }} h</strong> </p>
+              </div>
+            </div>
+
+            <!-- Additional details -->
+            <div class="travel-card-details">
+              <p><strong>Start Airport:</strong> {{ travel.start_airport }} ({{ travel.start_country }})</p>
+              <p><strong>Destination Airport:</strong> {{ travel.destination_airport }} ({{ travel.destination_country }})</p>
+              <p><strong>Flight Time:</strong> {{ formatMinutesToTime(travel.total_flight_time) }}</p>
+              <p><strong>Wait Time:</strong> {{ formatMinutesToTime(travel.total_wait_time) }}</p>
+              <p><strong>Flights:</strong> {{ travel.number_of_flights }}</p>
+              <p><strong>All Airports:</strong> {{ travel.all_airports_in_order }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Shortest return travels -->
+      <div class="subsection">
+        <h3>Shortest Return Travels</h3>
+        <div class="travel-cards">
+          <div *ngFor="let travel of returnShortest" class="travel-card" (click)="openTravelDetail(travel)">
+            <!-- Header: City info on left, Price on right -->
+            <div class="travel-card-header">
+              <div class="city-info">
+                <h3>{{ travel.start_city }} → {{ travel.destination_city }}</h3>
+              </div>
+              <div class="price-info">
+                <p class="price">{{ travel.total_price | currency:'EUR' }}</p>
+              </div>
+            </div>
+
+            <!-- Subheader: Travel Period and Total Duration -->
+            <div class="travel-card-subheader">
+              <div class="period-info">
+                <p><strong>{{ travel.period_start | date:'yyyy-MM-dd' }} → {{ travel.period_end | date:'yyyy-MM-dd' }}</strong></p>
+              </div>
+              <div class="duration-info">
+                <p>Duration:<strong> {{ formatDuration(travel.total_duration) }} h</strong> </p>
+              </div>
+            </div>
+
+            <!-- Additional details -->
+            <div class="travel-card-details">
+              <p><strong>Start Airport:</strong> {{ travel.start_airport }} ({{ travel.start_country }})</p>
+              <p><strong>Destination Airport:</strong> {{ travel.destination_airport }} ({{ travel.destination_country }})</p>
+              <p><strong>Flight Time:</strong> {{ formatMinutesToTime(travel.total_flight_time) }}</p>
+              <p><strong>Wait Time:</strong> {{ formatMinutesToTime(travel.total_wait_time) }}</p>
+              <p><strong>Flights:</strong> {{ travel.number_of_flights }}</p>
+              <p><strong>All Airports:</strong> {{ travel.all_airports_in_order }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
   </section>
 </div>

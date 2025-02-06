@@ -104,3 +104,99 @@ button:disabled {
   border-radius: 4px;
   margin-bottom: 10px;
 }
+
+
+
+
+
+.travel-cards {
+  display: flex;
+  overflow-x: auto;
+  gap: 20px;
+}
+
+.travel-card {
+  flex: 0 0 auto;
+  width: 30%;
+  border: 1px solid #ccc;
+  padding: 15px;
+  border-radius: 8px;
+  background-color: #fff;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  margin-bottom: 15px;
+}
+
+.travel-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+  background-color: #f4e3a3;
+}
+
+/* Header: City Info and Price */
+.travel-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.travel-card-header .city-info h3 {
+  font-size: 1.6rem;
+  color: #3369f1;
+  margin: 0;
+  font-weight: 600;
+}
+
+.travel-card-header .price-info .price {
+  font-size: 1.6rem;
+  color: #3369f1;
+  font-weight: bold;
+}
+
+/* Subheader: Travel Period and Total Duration */
+.travel-card-subheader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.travel-card-subheader .period-info p {
+  font-size: 1.15rem;
+  color: #073590;
+  margin: 0;
+}
+
+.travel-card-subheader .duration-info p {
+  font-size: 0.95rem;
+  color: #073590;
+  margin: 0;
+}
+
+/* Details Section */
+.travel-card-details p {
+  font-size: 0.9rem;
+  color: #444;
+  margin: 4px 0;
+}
+
+.travel-card-details p strong {
+  color: #073590;
+}
+
+
+
+
+@media (max-width: 768px) {
+  .travel-card {
+    width: 45%;
+  }
+}
+
+@media (max-width: 480px) {
+  .travel-card {
+    width: 100%;
+  }
+}
