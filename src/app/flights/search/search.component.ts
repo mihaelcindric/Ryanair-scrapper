@@ -149,41 +149,6 @@ export class SearchComponent {
       periodEnd: periodEnd
     };
 
-    // Fetch details for origin location
-    this.flightsService.getLocationDetails(formValues.from).subscribe({
-      next: (data: { name: string; country: string; }) => {
-        travelInfo.startCity = data.name;
-        travelInfo.startCountry = data.country;
-        console.log("✅ [onSearch] Retrieved start location details:", data);
-      },
-      error: (err: any) => {
-        console.error("❌ [onSearch] Error fetching start location details:", err);
-      }
-    });
-
-    // Fetch details for destination (if entered)
-    if (formValues.to) {
-      if (this.groupedLocations[formValues.to]) {
-        console.log(`ℹ️ [onSearch] Destination "${formValues.to}" seems like a country.`);
-        travelInfo.destinationCity = '';
-        travelInfo.destinationCountry = formValues.to;
-      } else {
-        this.flightsService.getLocationDetails(formValues.to).subscribe({
-          next: (data: { name: string; country: string; }) => {
-            travelInfo.destinationCity = data.name;
-            travelInfo.destinationCountry = data.country;
-            console.log("✅ [onSearch] Retrieved destination location details:", data);
-          },
-          error: (err: any) => {
-            console.error("❌ [onSearch] Error fetching destination location details:", err);
-          }
-        });
-      }
-    } else {
-      travelInfo.destinationCity = '';
-      travelInfo.destinationCountry = '';
-    }
-
     console.log("🔄 Fetching airports for locations...");
     const fromAirports = await this.getAirportsForLocation(fromLocation);
     let toAirports = toLocation ? await this.getAirportsForLocation(toLocation) : [];
@@ -225,7 +190,7 @@ export class SearchComponent {
         }
       } else {
         console.log(`🔹 Checking for direct flights for all possible destinations: ${fromAirport}`);
-        toAirports = await this.fetchFlightsWithoutDestination(fromAirport, periodStart, periodEnd, flightResults, travelInfo);
+        await this.fetchFlightsWithoutDestination(fromAirport, periodStart, periodEnd, flightResults, travelInfo);
       }
     }
 
@@ -235,6 +200,12 @@ export class SearchComponent {
     if (returnFlight && toLocation) {
       this.outboundTravels = this.searchResults.filter(travel => travel.start_city === fromLocation);
       this.returnTravels = this.searchResults.filter(travel => travel.start_city === toLocation);
+      if (this.outboundTravels.length === 0) {
+        this.outboundTravels = this.searchResults.filter(travel => travel.start_country === fromLocation);
+      }
+      if (this.returnTravels.length === 0) {
+        this.returnTravels = this.searchResults.filter(travel => travel.start_country === toLocation);
+      }
     } else {
       this.outboundTravels = this.searchResults;
       this.returnTravels = [];
@@ -477,6 +448,7 @@ export class SearchComponent {
               periodStart: travelInfo.periodStart,
               periodEnd: travelInfo.periodEnd
             };
+            await this.completeTravelInfoData(fromAirport, airportCode, travelInfoForFlight);
             const filteredFlights = formattedFlights.filter((flight: { to: string; }) => flight.to === airportCode);
             for (const flight of filteredFlights) {
               const singleFlightData = {
@@ -487,7 +459,7 @@ export class SearchComponent {
               };
               console.log("ℹ️ [fetchFlightsWithoutDestination] Processing direct flight (no destination) individually:", JSON.stringify(flight, null, 2));
               try {
-                await this.storeFlightsAndTravel(singleFlightData, fromAirport, flight.to, travelInfo);
+                await this.storeFlightsAndTravel(singleFlightData, fromAirport, flight.to, travelInfoForFlight);
                 console.log(`✅ [fetchFlightsWithoutDestination] Successfully stored flight from ${flight.from} to ${flight.to}`);
               } catch (error) {
                 console.error(`❌ [fetchFlightsWithoutDestination] Error storing flight from ${flight.from} to ${flight.to}:`, error);
@@ -686,18 +658,11 @@ export class SearchComponent {
     const numberOfFlights = flightData.outbound ? flightData.outbound.length : 0;
     console.log("🔍 [storeFlightsAndTravel] Calculated travelDuration:", travelDuration, "Number of flights (route length):", numberOfFlights);
 
-    if (!travelInfo.destinationCountry || travelInfo.destinationCountry.trim() === '') {
-      try {
-        // Fetch the destination details based on the destination airport code
-        const destDetails = await this.flightsService.getLocationByAirport(toAirport).toPromise();
-        if (destDetails) {
-          travelInfo.destinationCountry = destDetails.country;
-          travelInfo.destinationCity = destDetails.name;
-          console.log(`✅ [storeFlightsAndTravel] Updated travelInfo with destination details from airport ${toAirport}:`, destDetails);
-        }
-      } catch (error) {
-        console.error(`❌ [storeFlightsAndTravel] Error fetching destination details for airport ${toAirport}:`, error);
-      }
+    try {
+      await this.completeTravelInfoData(fromAirport, toAirport, travelInfo);
+      console.log(`✅ [storeFlightsAndTravel] Updated travelInfo with destination details from airport ${toAirport}:`);
+    } catch (error) {
+      console.error(`❌ [storeFlightsAndTravel] Error fetching destination details for airport ${toAirport}:`, error);
     }
 
     const travelRecord = {
@@ -788,6 +753,36 @@ export class SearchComponent {
 
     console.log("🚀 Final sorted flights:", flights);
     return flights;
+  }
+
+
+  async completeTravelInfoData(fromAirport: string, toAirport: string, travelInfo: any): Promise<void> {
+    try {
+      console.log("🔄 [completeTravelInfoData] Fetching location details...");
+
+      const origin = await this.flightsService.getLocationByAirport(fromAirport).toPromise();
+      const destination = await this.flightsService.getLocationByAirport(toAirport).toPromise();
+
+      if (origin) {
+        const originDetails = await this.flightsService.getLocationDetails(origin.name).toPromise();
+        // @ts-ignore
+        travelInfo.startCity = originDetails.name;
+        // @ts-ignore
+        travelInfo.startCountry = originDetails.country;
+        console.log("✅ [completeTravelInfoData] Retrieved start location details:", originDetails);
+      }
+
+      if (destination) {
+        const destinationDetails = await this.flightsService.getLocationDetails(destination.name).toPromise();
+        // @ts-ignore
+        travelInfo.destinationCity = destinationDetails.name;
+        // @ts-ignore
+        travelInfo.destinationCountry = destinationDetails.country;
+        console.log("✅ [completeTravelInfoData] Retrieved destination location details:", destinationDetails);
+      }
+    } catch (error) {
+      console.error("❌ [completeTravelInfoData] Error fetching location details:", error);
+    }
   }
 
 
@@ -984,26 +979,112 @@ export class SearchComponent {
 
   async getStoredTravels(from: string, to: string, periodStart: string, periodEnd: string, returnFlight: boolean): Promise<any[]> {
     try {
-      const outboundTravels = await this.flightsService.getStoredTravels(from, to, periodStart, periodEnd).toPromise();
-      let combinedTravels: any[] = outboundTravels || [];
+      console.log(`🔍 [getStoredTravels] Fetching airports for location: ${from}`);
+      const fromAirports = await this.getAirportsForLocation(from);
 
-      if (returnFlight && to) {
-        const inboundTravels = await this.flightsService.getStoredTravels(to, from, periodStart, periodEnd).toPromise();
-        if (inboundTravels && inboundTravels.length > 0) {
-          combinedTravels = combinedTravels.concat(inboundTravels);
+      if (!fromAirports || fromAirports.length === 0) {
+        console.warn(`⚠️ No airports found for location: ${from}`);
+        return [];
+      }
+
+      console.log(`✅ [getStoredTravels] Found ${fromAirports.length} airports for location: ${from}`);
+
+      let toAirports: string[] = [];
+      if (to) {
+        console.log(`🔍 [getStoredTravels] Fetching airports for location: ${to}`);
+        toAirports = await this.getAirportsForLocation(to);
+
+        if (!toAirports || toAirports.length === 0) {
+          console.warn(`⚠️ No airports found for location: ${to}`);
+        } else {
+          console.log(`✅ [getStoredTravels] Found ${toAirports.length} airports for location: ${to}`);
         }
       }
 
-      if (!combinedTravels || combinedTravels.length === 0) {
+      let combinedTravels: any[] = [];
+
+      // Fetch Travels for each airport
+      for (const fromAirport of fromAirports) {
+        console.log(`🔍 [getStoredTravels] Fetching location for airport: ${fromAirport}`);
+        const fromLocation = await this.flightsService.getLocationByAirport(fromAirport).toPromise();
+
+        if (!fromLocation || !fromLocation.name) {
+          console.warn(`⚠️ No valid location found for airport: ${fromAirport}, skipping.`);
+          continue;
+        }
+
+        console.log(`✅ [getStoredTravels] Found location for airport ${fromAirport}: ${fromLocation.name}`);
+
+        if (toAirports.length > 0) {
+          // If the destination is entered, check for each airport at that destination
+          for (const toAirport of toAirports) {
+            console.log(`🔍 [getStoredTravels] Fetching location for destination airport: ${toAirport}`);
+            const toLocation = await this.flightsService.getLocationByAirport(toAirport).toPromise();
+
+            if (!toLocation || !toLocation.name) {
+              console.warn(`⚠️ No valid location found for destination airport: ${toAirport}, skipping.`);
+              continue;
+            }
+
+            console.log(`✅ [getStoredTravels] Found location for destination airport ${toAirport}: ${toLocation.name}`);
+
+            const outboundTravels = await this.flightsService.getStoredTravels(fromLocation.name, toLocation.name, periodStart, periodEnd).toPromise();
+            if (outboundTravels && outboundTravels.length > 0) {
+              combinedTravels = combinedTravels.concat(outboundTravels);
+            }
+          }
+        } else {
+          // If there is no destination entered, just send the origin info
+          const outboundTravels = await this.flightsService.getStoredTravels(fromLocation.name, "", periodStart, periodEnd).toPromise();
+          if (outboundTravels && outboundTravels.length > 0) {
+            combinedTravels = combinedTravels.concat(outboundTravels);
+          }
+        }
+      }
+
+      // Do the same as for the outbound Travels, but switch "to" and "from"
+      if (returnFlight && toAirports.length > 0) {
+        console.log(`🔍 [getStoredTravels] Fetching return flights`);
+
+        for (const toAirport of toAirports) {
+          console.log(`🔍 [getStoredTravels] Fetching location for return airport: ${toAirport}`);
+          const toLocation = await this.flightsService.getLocationByAirport(toAirport).toPromise();
+
+          if (!toLocation || !toLocation.name) {
+            console.warn(`⚠️ No valid location found for return airport: ${toAirport}, skipping.`);
+            continue;
+          }
+
+          console.log(`✅ [getStoredTravels] Found location for return airport ${toAirport}: ${toLocation.name}`);
+
+          for (const fromAirport of fromAirports) {
+            console.log(`🔍 [getStoredTravels] Fetching location for original departure airport (return leg): ${fromAirport}`);
+            const fromLocation = await this.flightsService.getLocationByAirport(fromAirport).toPromise();
+
+            if (!fromLocation || !fromLocation.name) {
+              console.warn(`⚠️ No valid location found for original departure airport: ${fromAirport}, skipping.`);
+              continue;
+            }
+
+            console.log(`✅ [getStoredTravels] Found location for original departure airport ${fromAirport}: ${fromLocation.name}`);
+
+            const inboundTravels = await this.flightsService.getStoredTravels(toLocation.name, fromLocation.name, periodStart, periodEnd).toPromise();
+            if (inboundTravels && inboundTravels.length > 0) {
+              combinedTravels = combinedTravels.concat(inboundTravels);
+            }
+          }
+        }
+      }
+
+      if (combinedTravels.length === 0) {
         console.warn("⚠️ No travels found for the given criteria.");
         return [];
       }
 
-      console.log("✅ Stored travels found:", combinedTravels);
-
+      console.log("✅ [getStoredTravels] Stored travels found:", combinedTravels);
       return combinedTravels;
     } catch (error) {
-      console.error("❌ Error fetching stored travels:", error);
+      console.error("❌ [getStoredTravels] Error fetching stored travels:", error);
       return [];
     }
   }
