@@ -60,7 +60,11 @@
     </form>
   </section>
 
-  <section class="results-section" *ngIf="searchResults && searchResults.length > 0">
+  <div *ngIf="isLoading" class="spinner-container">
+    <app-spinner></app-spinner>
+  </div>
+
+  <section class="results-section" *ngIf="!isLoading && searchResults && searchResults.length > 0">
     <!-- OUTBOUND TRAVELS -->
     <section class="results-section" *ngIf="outboundTravels.length > 0">
       <h2>Outbound Travels</h2>

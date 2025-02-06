@@ -200,3 +200,13 @@ button:disabled {
     width: 100%;
   }
 }
+
+
+
+
+.spinner-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100px;
+}

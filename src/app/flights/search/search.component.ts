@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import {ChangeDetectorRef, Component} from '@angular/core';
 import {
   AbstractControl,
   FormBuilder,
@@ -12,19 +12,24 @@ import { HttpClient } from '@angular/common/http';
 import { FlightsService} from '../../services/flights.service';
 import { MatDialog } from '@angular/material/dialog';
 import {TravelDetailComponent, TravelDetailData} from '../travel-detail/travel-detail.component';
+import {SpinnerComponent} from '../../shared/spinner/spinner.component';
 
 @Component({
   selector: 'app-search',
   templateUrl: './search.component.html',
   imports: [
     ReactiveFormsModule,
-    CommonModule
+    CommonModule,
+    SpinnerComponent
   ],
   styleUrls: ['./search.component.css']
 })
 export class SearchComponent {
   searchForm: FormGroup;
   today: string;
+
+  isLoading: boolean = false;
+
   searchResults: any[] = [];
   outboundTravels : any[] = [];
   returnTravels : any[] = [];
@@ -33,14 +38,15 @@ export class SearchComponent {
   returnCheapest: any[] = [];
   returnShortest: any[] = [];
 
-
   locations: any[] = [];
   groupedLocations: { [country: string]: any[] } = {}; // Locations grouped by countries
+
 
   constructor(private fb: FormBuilder,
               private http: HttpClient,
               private flightsService: FlightsService,
-              private dialog: MatDialog
+              private dialog: MatDialog,
+              private cdr: ChangeDetectorRef,
   ) {
     const now = new Date();
     this.today = now.toISOString().split('T')[0];
@@ -124,111 +130,122 @@ export class SearchComponent {
       return;
     }
 
-    const formValues = this.searchForm.value;
-    console.log("✅ Valid form data:", formValues);
+    this.isLoading = true;
+    this.cdr.detectChanges();
 
-    const fromLocation = formValues.from;
-    const toLocation = formValues.to;
-    const periodStart = formValues.period_start;
-    const periodEnd = formValues.period_end;
-    const duration = formValues.duration;
-    const returnFlight = formValues.return_flight;
+    try {
+      const formValues = this.searchForm.value;
+      console.log("✅ Valid form data:", formValues);
 
-    if (returnFlight && (!toLocation || toLocation.trim() === '')) {
-      alert("Return flight is selected – please enter a destination.");
-      return;
-    }
+      const fromLocation = formValues.from;
+      const toLocation = formValues.to;
+      const periodStart = formValues.period_start;
+      const periodEnd = formValues.period_end;
+      const duration = formValues.duration;
+      const returnFlight = formValues.return_flight;
 
-    const travelInfo = {
-      startCountry: '',
-      destinationCountry: '',
-      startCity: '',
-      destinationCity: '',
-      numberOfPersons: formValues.number_of_persons,
-      periodStart: periodStart,
-      periodEnd: periodEnd
-    };
+      if (returnFlight && (!toLocation || toLocation.trim() === '')) {
+        alert("Return flight is selected – please enter a destination.");
+        return;
+      }
 
-    console.log("🔄 Fetching airports for locations...");
-    const fromAirports = await this.getAirportsForLocation(fromLocation);
-    let toAirports = toLocation ? await this.getAirportsForLocation(toLocation) : [];
+      const travelInfo = {
+        startCountry: '',
+        destinationCountry: '',
+        startCity: '',
+        destinationCity: '',
+        numberOfPersons: formValues.number_of_persons,
+        periodStart: periodStart,
+        periodEnd: periodEnd
+      };
 
-    console.log("📍 Airports for FROM location:", fromAirports);
-    console.log("📍 Airports for TO location:", toAirports);
+      console.log("🔄 Fetching airports for locations...");
+      const fromAirports = await this.getAirportsForLocation(fromLocation);
+      let toAirports = toLocation ? await this.getAirportsForLocation(toLocation) : [];
 
-    if (fromAirports.length === 0) {
-      console.error("❌ No departure airports found.");
-      alert("No departure airports found.");
-      return;
-    }
+      console.log("📍 Airports for FROM location:", fromAirports);
+      console.log("📍 Airports for TO location:", toAirports);
 
-    console.log("🚀 Preparing API calls...");
-    const flightResults: any[] = [];
+      if (fromAirports.length === 0) {
+        console.error("❌ No departure airports found.");
+        alert("No departure airports found.");
+        return;
+      }
 
-    for (const fromAirport of fromAirports) {
-      if (toAirports.length > 0) {
-        for (const toAirport of toAirports) {
-          console.log(`🔹 Checking for direct flights: ${fromAirport} -> ${toAirport}`);
+      console.log("🚀 Preparing API calls...");
+      const flightResults: any[] = [];
 
-          // Finding the shortes routes
-          let routes = await this.findShortestRoutes(fromAirport, toAirport);
-          if (routes.length === 0) {
-            console.warn(`⚠️ No valid route found between ${fromAirport} and ${toAirport}. Skipping.`);
-            continue;
-          }
-          console.log(`🛫 Found ${routes.length} shortest route(s) between ${fromAirport} and ${toAirport}`);
-          for (const route of routes) {
-            console.log(`🛫 Processing route: ${route.join(" -> ")}`);
-            if (route.length === 2) {
-              // Direct flight
-              await this.fetchFlightsBetweenAirports(fromAirport, toAirport, periodStart, periodEnd, duration, returnFlight, flightResults, travelInfo, true);
-            } else {
-              // Multi-leg route
-              await this.processMultiLegRoute(route, periodStart, periodEnd, duration, returnFlight, travelInfo, flightResults);
+      for (const fromAirport of fromAirports) {
+        if (toAirports.length > 0) {
+          for (const toAirport of toAirports) {
+            console.log(`🔹 Checking for direct flights: ${fromAirport} -> ${toAirport}`);
+
+            // Finding the shortes routes
+            let routes = await this.findShortestRoutes(fromAirport, toAirport);
+            if (routes.length === 0) {
+              console.warn(`⚠️ No valid route found between ${fromAirport} and ${toAirport}. Skipping.`);
+              continue;
+            }
+            console.log(`🛫 Found ${routes.length} shortest route(s) between ${fromAirport} and ${toAirport}`);
+            for (const route of routes) {
+              console.log(`🛫 Processing route: ${route.join(" -> ")}`);
+              if (route.length === 2) {
+                // Direct flight
+                await this.fetchFlightsBetweenAirports(fromAirport, toAirport, periodStart, periodEnd, duration, returnFlight, flightResults, travelInfo, true);
+              } else {
+                // Multi-leg route
+                await this.processMultiLegRoute(route, periodStart, periodEnd, duration, returnFlight, travelInfo, flightResults);
+              }
             }
           }
+        } else {
+          console.log(`🔹 Checking for direct flights for all possible destinations: ${fromAirport}`);
+          await this.fetchFlightsWithoutDestination(fromAirport, periodStart, periodEnd, flightResults, travelInfo);
+        }
+      }
+
+      console.log("🚀 Fetching stored travels...");
+      this.searchResults = await this.getStoredTravels(fromLocation, toLocation, periodStart, periodEnd, returnFlight);
+
+      if (returnFlight && toLocation) {
+        this.outboundTravels = this.searchResults.filter(travel => travel.start_city === fromLocation);
+        this.returnTravels = this.searchResults.filter(travel => travel.start_city === toLocation);
+        if (this.outboundTravels.length === 0) {
+          this.outboundTravels = this.searchResults.filter(travel => travel.start_country === fromLocation);
+        }
+        if (this.returnTravels.length === 0) {
+          this.returnTravels = this.searchResults.filter(travel => travel.start_country === toLocation);
         }
       } else {
-        console.log(`🔹 Checking for direct flights for all possible destinations: ${fromAirport}`);
-        await this.fetchFlightsWithoutDestination(fromAirport, periodStart, periodEnd, flightResults, travelInfo);
+        this.outboundTravels = this.searchResults;
+        this.returnTravels = [];
       }
+
+      // outbound travels - sorted by price and duration
+      this.outboundCheapest = [...this.outboundTravels]
+        .sort((a, b) => a.total_price - b.total_price)
+//      .slice(0, 5);
+      this.outboundShortest = [...this.outboundTravels]
+        .sort((a, b) => a.total_duration.localeCompare(b.total_duration))
+//      .slice(0, 5);
+
+      // return travels (if exist) - sorted by price and duration
+      this.returnCheapest = [...this.returnTravels]
+        .sort((a, b) => a.total_price - b.total_price)
+//      .slice(0, 5);
+      this.returnShortest = [...this.returnTravels]
+        .sort((a, b) => a.total_duration.localeCompare(b.total_duration))
+//      .slice(0, 5);
+
+      console.log('✅ Final Outbound Travels:', this.outboundTravels);
+      console.log('✅ Final Return Travels:', this.returnTravels);
+
+    } catch (error) {
+      console.error("❌ Error during search:", error);
+    } finally {
+      this.isLoading = false;  // ⬅️ Zaustavlja spinner nakon pretrage
+      this.cdr.detectChanges();
     }
-
-    console.log("🚀 Fetching stored travels...");
-    this.searchResults = await this.getStoredTravels(fromLocation, toLocation, periodStart, periodEnd, returnFlight);
-
-    if (returnFlight && toLocation) {
-      this.outboundTravels = this.searchResults.filter(travel => travel.start_city === fromLocation);
-      this.returnTravels = this.searchResults.filter(travel => travel.start_city === toLocation);
-      if (this.outboundTravels.length === 0) {
-        this.outboundTravels = this.searchResults.filter(travel => travel.start_country === fromLocation);
-      }
-      if (this.returnTravels.length === 0) {
-        this.returnTravels = this.searchResults.filter(travel => travel.start_country === toLocation);
-      }
-    } else {
-      this.outboundTravels = this.searchResults;
-      this.returnTravels = [];
-    }
-
-    // outbound travels - sorted by price and duration
-    this.outboundCheapest = [...this.outboundTravels]
-      .sort((a, b) => a.total_price - b.total_price)
-//      .slice(0, 5);
-    this.outboundShortest = [...this.outboundTravels]
-      .sort((a, b) => a.total_duration.localeCompare(b.total_duration))
-//      .slice(0, 5);
-
-    // return travels (if exist) - sorted by price and duration
-    this.returnCheapest = [...this.returnTravels]
-      .sort((a, b) => a.total_price - b.total_price)
-//      .slice(0, 5);
-    this.returnShortest = [...this.returnTravels]
-      .sort((a, b) => a.total_duration.localeCompare(b.total_duration))
-//      .slice(0, 5);
-
-    console.log('✅ Final Outbound Travels:', this.outboundTravels);
-    console.log('✅ Final Return Travels:', this.returnTravels);
   }
 
 
