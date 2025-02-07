@@ -1,1 +1,94 @@
-<p>dashboard works!</p>
+<div class="admin-dashboard">
+  <!-- Navigation between tables -->
+  <div class="table-navigation">
+    <button *ngFor="let table of tables"
+            [class.active]="selectedTable === table"
+            (click)="selectTable(table)">
+      {{ table }}
+    </button>
+  </div>
+
+  <!--Navigation between 'Examine' and 'Insert' -->
+  <div class="action-navigation">
+    <button [class.active]="currentAction === 'examine'" (click)="setAction('examine')">Examine</button>
+    <button [class.active]="currentAction === 'insert'" (click)="setAction('insert')">Insert</button>
+  </div>
+
+  <!-- Displaying table data if 'Examine' -->
+  <div *ngIf="currentAction === 'examine'" class="table-container">
+    <table>
+      <thead>
+      <tr>
+        <th *ngFor="let column of tableColumns">{{ column.name }}</th>
+        <th>Actions</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr *ngFor="let row of tableData">
+        <td *ngFor="let column of tableColumns">
+          <input *ngIf="row.isEditing && getInputType(column.type) === 'checkbox'"
+                 [(ngModel)]="row[column.name]"
+                 type="checkbox" />
+
+          <input *ngIf="row.isEditing && (getInputType(column.type) === 'datetime-local' || getInputType(column.type) === 'date')"
+                 [(ngModel)]="row[column.name]"
+                 [type]="getInputType(column.type)" />
+
+          <input *ngIf="row.isEditing && getInputType(column.type) !== 'checkbox' && getInputType(column.type) !== 'datetime-local' && getInputType(column.type) !== 'date'"
+                 [(ngModel)]="row[column.name]"
+                 [type]="getInputType(column.type)"
+                 [required]="!column.nullable" />
+
+
+          <span *ngIf="!row.isEditing">{{ row[column.name] }}</span>
+        </td>
+        <td>
+          <button *ngIf="!row.isEditing" (click)="editRow(row)">Edit</button>
+          <button *ngIf="row.isEditing" (click)="saveRow(row)">Save</button>
+          <button class="delete-btn" (click)="deleteRow(row.id)">Delete</button>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Insert form if 'Insert' -->
+  <div *ngIf="currentAction === 'insert'" class="insert-form">
+    <h3>Insert New {{ selectedTable }} Entry</h3>
+    <form (ngSubmit)="insertRow()">
+      <div *ngFor="let column of tableColumns">
+        <label>{{ column.name }}</label>
+
+        <input *ngIf="getInputType(column.type) === 'checkbox'"
+               [(ngModel)]="newRow[column.name]"
+               type="checkbox"
+               name="{{ column.name }}" />
+
+        <input *ngIf="getInputType(column.type) === 'time'"
+               [(ngModel)]="newRow[column.name]"
+               (input)="formatTimeInput(column.name)"
+               type="text"
+               name="{{ column.name }}"
+               placeholder="hh:mm:ss"
+               maxlength="8" />
+
+        <input *ngIf="getInputType(column.type) !== 'checkbox' && getInputType(column.type) !== 'time'"
+               [(ngModel)]="newRow[column.name]"
+               name="{{ column.name }}"
+               [type]="getInputType(column.type)"
+               [required]="!column.nullable" />
+      </div>
+
+      <button type="submit" [disabled]="!isFormValid(newRow)">Insert</button>
+    </form>
+  </div>
+
+  <!-- Refresh airports and locations -->
+  <div class="refresh-container">
+    <button (click)="refreshAirportsAndLocations()">Refresh airports and locations</button>
+  </div>
+
+  <div *ngIf="popupMessage" class="popup-message" [ngClass]="popupType">
+    {{ popupMessage }}
+  </div>
+</div>
