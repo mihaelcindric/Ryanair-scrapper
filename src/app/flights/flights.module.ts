@@ -4,7 +4,8 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 
 import { SearchComponent } from './search/search.component';
-import { ResultsComponent } from './results/results.component';
+import {TravelDetailComponent} from './travel-detail/travel-detail.component';
+import {MatDialogModule} from '@angular/material/dialog';
 
 @NgModule({
   declarations: [
@@ -16,11 +17,11 @@ import { ResultsComponent } from './results/results.component';
     ReactiveFormsModule,
     RouterModule,
     SearchComponent,
-    ResultsComponent,
+    TravelDetailComponent,
+    MatDialogModule
   ],
   exports: [
     SearchComponent,
-    ResultsComponent,
   ],
 })
 export class FlightsModule {}
