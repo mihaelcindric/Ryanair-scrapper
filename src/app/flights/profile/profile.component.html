@@ -53,3 +53,62 @@
 
   <button class="logout-btn" (click)="logout()">Logout</button>
 </div>
+
+<div class="baggage-container">
+  <div class="baggage-header">
+    <h3>My Baggage</h3>
+    <button class="add-baggage-btn" (click)="startAddingBaggage()">Add New Baggage</button>
+  </div>
+
+  <!-- 📦 Baggage Form -->
+  <form *ngIf="isAddingBaggage" [formGroup]="baggageForm" (ngSubmit)="addOrUpdateBaggage()" class="baggage-form">
+    <label>Brand</label>
+    <input type="text" formControlName="brand">
+
+    <label>Color</label>
+    <input type="text" formControlName="color" required>
+
+    <label>Width (cm)</label>
+    <input type="number" formControlName="width" required>
+
+    <label>Height (cm)</label>
+    <input type="number" formControlName="height" required>
+
+    <label>Depth (cm)</label>
+    <input type="number" formControlName="depth" required>
+
+    <label>Wheels Count</label>
+    <input type="number" formControlName="wheels_count">
+
+    <label>Has Tracker</label>
+    <input type="checkbox" formControlName="has_tracker">
+
+    <div class="form-actions">
+      <button type="submit" [disabled]="baggageForm.invalid" class="save-btn">Save</button>
+      <button type="button" class="cancel-btn" (click)="isAddingBaggage = false">Cancel</button>
+    </div>
+  </form>
+
+  <!-- 📋 Baggage List -->
+  <table *ngIf="baggageList.length > 0" class="baggage-table">
+    <tr>
+      <th>Brand</th>
+      <th>Color</th>
+      <th>Size</th>
+      <th>Wheels</th>
+      <th>Tracker</th>
+      <th>Actions</th>
+    </tr>
+    <tr *ngFor="let item of baggageList">
+      <td>{{ item.brand }}</td>
+      <td>{{ item.color }}</td>
+      <td>{{ item.width }}x{{ item.height }}x{{ item.depth }}</td>
+      <td>{{ item.wheels_count }}</td>
+      <td>{{ item.has_tracker ? '✅' : '❌' }}</td>
+      <td class="baggage-actions">
+        <button class="edit-baggage-btn" (click)="editBaggage(item)">Edit</button>
+        <button class="delete-baggage-btn" (click)="deleteBaggage(item.id)">Delete</button>
+      </td>
+    </tr>
+  </table>
+</div>

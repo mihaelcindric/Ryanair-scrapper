@@ -107,3 +107,183 @@ button {
 .cancel-btn:hover {
   background-color: #5a6268;
 }
+
+
+
+
+/* 📦 Baggage Section */
+.baggage-container {
+  max-width: 600px;
+  margin: 30px auto;
+  background: #ffffff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.baggage-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 3px solid #073590;
+  padding-bottom: 10px;
+  margin-bottom: 15px;
+}
+
+.baggage-header h3 {
+  color: #073590;
+  font-size: 20px;
+  font-weight: bold;
+  margin: 0;
+}
+
+.baggage-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+  background: white;
+  border: 1px solid #073590;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.baggage-table th,
+.baggage-table td {
+  padding: 12px;
+  border: 1px solid #073590;
+  text-align: center;
+  font-size: 14px;
+}
+
+.baggage-table th {
+  background-color: #073590;
+  color: white;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.baggage-table tr:nth-child(even) {
+  background-color: #f8f9fa;
+}
+
+.baggage-table tr:hover {
+  background-color: #e2e6f0;
+  transition: background 0.3s ease-in-out;
+}
+
+.baggage-actions {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+.baggage-actions button {
+  padding: 8px 14px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.3s ease-in-out;
+}
+
+.edit-baggage-btn {
+  background: #f1c933;
+  color: #073590;
+}
+
+.edit-baggage-btn:hover {
+  background: #d4aa00;
+}
+
+.delete-baggage-btn {
+  background: #d9534f;
+  color: white;
+}
+
+.delete-baggage-btn:hover {
+  background: #c9302c;
+}
+
+.add-baggage-btn {
+  background: #073590;
+  color: white;
+  padding: 10px 16px;
+  font-size: 14px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  margin: 15px auto 0;
+  transition: all 0.3s ease-in-out;
+}
+
+.add-baggage-btn:hover {
+  background: #052b66;
+}
+
+.baggage-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 15px;
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+.baggage-form label {
+  font-weight: bold;
+  color: #073590;
+  font-size: 14px;
+}
+
+.baggage-form input {
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 14px;
+  width: 100%;
+}
+
+.baggage-form .form-actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.baggage-form .save-btn,
+.baggage-form .cancel-btn {
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: bold;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
+}
+
+.baggage-form .save-btn {
+  background: #28a745;
+  color: white;
+  box-shadow: 0 4px 6px rgba(40, 167, 69, 0.2);
+}
+
+.baggage-form .save-btn:hover {
+  background: #218838;
+  box-shadow: 0 6px 8px rgba(40, 167, 69, 0.3);
+}
+
+.baggage-form .cancel-btn {
+  background: #6c757d;
+  color: white;
+  box-shadow: 0 4px 6px rgba(108, 117, 125, 0.2);
+}
+
+.baggage-form .cancel-btn:hover {
+  background: #5a6268;
+  box-shadow: 0 6px 8px rgba(108, 117, 125, 0.3);
+}
