@@ -4,7 +4,7 @@ const sql = require('mssql');
 const getAirportCodes = async (req, res) => {
   try {
     const pool = await connectToDatabase();
-    const result = await pool.request().query('SELECT code FROM Sifrarnik.Airport');
+    const result = await pool.request().query('SELECT code FROM [Sifrarnik].Airport');
     res.json(result.recordset);
   } catch (err) {
     console.error('Error fetching airport codes:', err);
@@ -15,7 +15,7 @@ const getAirportCodes = async (req, res) => {
 const getLocations = async (req, res) => {
   try {
     const pool = await connectToDatabase();
-    const result = await pool.request().query('SELECT name, country FROM Location');
+    const result = await pool.request().query('SELECT name, country FROM [Sifrarnik].Location');
     res.json(result.recordset);
   } catch (err) {
     console.error('Error fetching locations:', err);
@@ -41,7 +41,7 @@ const addFlight = async (req, res) => {
       .input('registration', null)
       .input('capacity', 150)
       .query(`
-        INSERT INTO Airplane (model, registration, capacity)
+        INSERT INTO [IO].Airplane (model, registration, capacity)
         OUTPUT INSERTED.id
         VALUES (@model, @registration, @capacity);
       `);
@@ -76,7 +76,7 @@ const addFlight = async (req, res) => {
       console.log(`✅ Flight upserted with ID: ${flightId}`);
 
       // Fetch all flight categories
-      const categoryResult = await pool.request().query(`SELECT id FROM Flight_category`);
+      const categoryResult = await pool.request().query(`SELECT id FROM [Sifrarnik].Flight_category`);
       const categories = categoryResult.recordset.map(row => row.id);
 
       // Connect the flight with all categories (default)
@@ -89,7 +89,7 @@ const addFlight = async (req, res) => {
           insertRequest.input(`categoryId${index}`, categoryId);
         });
 
-        const insertQuery = `INSERT INTO Flight_Flight_category (flight_id, category_id) VALUES ${values}`;
+        const insertQuery = `INSERT INTO [IO].Flight_Flight_category (flight_id, category_id) VALUES ${values}`;
         await insertRequest.query(insertQuery);
 
         console.log(`✅ Inserted ${categories.length} categories for flight ID: ${flightId}`);
@@ -130,7 +130,7 @@ const getFilteredFlights = async (req, res) => {
       .input('departure_time', departure_time)
       .input('arrival_time', arrival_time)
       .query(`
-        SELECT * FROM Flights
+        SELECT * FROM [IO].Flights
         WHERE departure_time >= @departure_time AND arrival_time <= @arrival_time
       `);
 
@@ -162,7 +162,7 @@ const getAirportsForLocation = async (req, res) => {
 
     console.log("🔎 Searching for location ID...");
     const locationResult = await request.query(`
-      SELECT id FROM Location WHERE name = @location OR country = @location
+      SELECT id FROM [Sifrarnik].Location WHERE name = @location OR country = @location
     `);
 
     if (locationResult.recordset.length === 0) {
@@ -175,7 +175,7 @@ const getAirportsForLocation = async (req, res) => {
 
     console.log("🔎 Fetching airports for location...");
     const airportsResult = await pool.request()
-      .query(`SELECT code FROM Airport WHERE location_id IN (${locationIds.join(",")})`);
+      .query(`SELECT code FROM [Sifrarnik].Airport WHERE location_id IN (${locationIds.join(",")})`);
 
     if (airportsResult.recordset.length === 0) {
       console.log("⚠️ WARNING: No airports found for this location.");
@@ -204,9 +204,9 @@ const getConnectedAirports = async (req, res) => {
 
     const result = await request.query(`
             SELECT DISTINCT A2.code AS connected_airport_code
-            FROM Airport_Airport AA
-            JOIN Airport A1 ON AA.origin_id = A1.id
-            JOIN Airport A2 ON AA.destination_id = A2.id
+            FROM [IO].Airport_Airport AA
+            JOIN [Sifrarnik].Airport A1 ON AA.origin_id = A1.id
+            JOIN [Sifrarnik].Airport A2 ON AA.destination_id = A2.id
             WHERE A1.code = @airportCode
         `);
 
@@ -263,11 +263,11 @@ const getStoredFlights = async (req, res) => {
         f.inserted_on,
         a_from.code AS from_airport,
         a_to.code AS to_airport
-      FROM Flight f
-      INNER JOIN Airport_Flight af_from ON f.id = af_from.flight_id
-      INNER JOIN Airport a_from ON af_from.airport_id = a_from.id
-      INNER JOIN Airport_Flight af_to ON f.id = af_to.flight_id
-      INNER JOIN Airport a_to ON af_to.airport_id = a_to.id
+      FROM [IO].Flight f
+      INNER JOIN [IO].Airport_Flight af_from ON f.id = af_from.flight_id
+      INNER JOIN [IO].Airport a_from ON af_from.airport_id = a_from.id
+      INNER JOIN [IO].Airport_Flight af_to ON f.id = af_to.flight_id
+      INNER JOIN [Sifrarnik].Airport a_to ON af_to.airport_id = a_to.id
       WHERE af_from.type = 'Departure Airport'
         AND af_to.type = 'Arrival Airport'
         AND a_from.code IN (${fromAirportsList})
@@ -308,7 +308,7 @@ const getLocationDetails = async (req, res) => {
     const pool = await connectToDatabase();
     const result = await pool.request()
       .input("selection", selection)
-      .query(`SELECT TOP 1 name, country FROM Location WHERE name = @selection OR country = @selection`);
+      .query(`SELECT TOP 1 name, country FROM [Sifrarnik].Location WHERE name = @selection OR country = @selection`);
     if (result.recordset.length === 0) {
       return res.status(404).json({ error: "Location not found." });
     }
@@ -328,7 +328,7 @@ const getLocationByAirport = async (req, res) => {
     const pool = await connectToDatabase();
     const result = await pool.request()
       .input("code", code)
-      .query(`SELECT L.name, L.country FROM Airport A JOIN Location L ON A.location_id = L.id WHERE A.code = @code`);
+      .query(`SELECT L.name, L.country FROM [Sifrarnik].Airport A JOIN [Sifrarnik].Location L ON A.location_id = L.id WHERE A.code = @code`);
     if (result.recordset.length === 0) {
       return res.status(404).json({ error: "Location for the given airport code not found." });
     }
@@ -383,7 +383,7 @@ const addTravel = async (req, res) => {
       .input('period_end', period_end);
 
     const insertQuery = `
-      INSERT INTO Travel
+      INSERT INTO [IO].Travel
         (total_duration, number_of_flights, start_country, destination_country, start_airport, destination_airport, start_city, destination_city, number_of_persons, period_start, period_end, inserted_on)
       VALUES
         (@total_duration, @number_of_flights, @start_country, @destination_country, @start_airport, @destination_airport, @start_city, @destination_city, @number_of_persons, @period_start, @period_end, GETDATE());
@@ -425,7 +425,7 @@ const addTravelFlight = async (req, res) => {
       .input('flight_id', flight_id);
 
     const insertQuery = `
-      INSERT INTO Travel_Flight (travel_id, flight_id)
+      INSERT INTO [IO].Travel_Flight (travel_id, flight_id)
       VALUES (@travel_id, @flight_id);
       SELECT SCOPE_IDENTITY() AS joinId;
     `;
@@ -466,11 +466,11 @@ const getStoredTravels = async (req, res) => {
     console.log("Database Connection: SUCCESS");
 
     const request = pool.request();
-    request.input('fromCity', sql.NVarChar, req.body.from);
-    request.input('periodStart', sql.Date, req.body.periodStart);
-    request.input('periodEnd', sql.Date, req.body.periodEnd);
+    request.input('fromCity', sql.NVarChar, from);
+    request.input('periodStart', sql.Date, periodStart);
+    request.input('periodEnd', sql.Date, periodEnd);
     if (req.body.to && req.body.to !== "") {
-      request.input('toCity', sql.NVarChar, req.body.to);
+      request.input('toCity', sql.NVarChar, to);
     }
 
     const result = await request.execute('sp_GetStoredTravels');
@@ -518,12 +518,12 @@ const getTravelFlights = async (req, res) => {
         F.inserted_on,
         a_from.code AS from_airport,
         a_to.code AS to_airport
-      FROM Flight F
-      INNER JOIN Travel_Flight TF ON F.id = TF.flight_id
-      INNER JOIN Airport_Flight AF_from ON F.id = AF_from.flight_id AND AF_from.type = 'Departure Airport'
-      INNER JOIN Airport a_from ON AF_from.airport_id = a_from.id
-      INNER JOIN Airport_Flight AF_to ON F.id = AF_to.flight_id AND AF_to.type = 'Arrival Airport'
-      INNER JOIN Airport a_to ON AF_to.airport_id = a_to.id
+      FROM [IO].Flight F
+      INNER JOIN [IO].Travel_Flight TF ON F.id = TF.flight_id
+      INNER JOIN [IO].Airport_Flight AF_from ON F.id = AF_from.flight_id AND AF_from.type = 'Departure Airport'
+      INNER JOIN [Sifrarnik].Airport a_from ON AF_from.airport_id = a_from.id
+      INNER JOIN [IO].Airport_Flight AF_to ON F.id = AF_to.flight_id AND AF_to.type = 'Arrival Airport'
+      INNER JOIN [Sifrarnik].Airport a_to ON AF_to.airport_id = a_to.id
       WHERE TF.travel_id = @travelId
       ORDER BY F.departure_time ASC;
     `;
@@ -554,7 +554,7 @@ const saveTravel = async (req, res) => {
       .request()
       .input("userId", user_id)
       .input("travelId", travel_id)
-      .query("SELECT * FROM [User_Travel] WHERE user_id = @userId AND travel_id = @travelId");
+      .query("SELECT * FROM [IO].[User_Travel] WHERE user_id = @userId AND travel_id = @travelId");
 
     if (checkExisting.recordset.length > 0) {
       return res.status(409).json({ success: false, message: "Travel is already saved." });
@@ -564,7 +564,7 @@ const saveTravel = async (req, res) => {
       .request()
       .input("userId", user_id)
       .input("travelId", travel_id)
-      .query("INSERT INTO [User_Travel] (user_id, travel_id) VALUES (@userId, @travelId)");
+      .query("INSERT INTO [IO].[User_Travel] (user_id, travel_id) VALUES (@userId, @travelId)");
 
     return res.json({ success: true, message: "Travel saved successfully!" });
   } catch (err) {
@@ -589,8 +589,8 @@ const getSavedTravels = async (req, res) => {
       .input("userId", user_id)
       .query(`
         SELECT t.*
-        FROM [Travel] t
-        JOIN [User_Travel] ut ON t.id = ut.travel_id
+        FROM [IO].[Travel] t
+        JOIN [IO].[User_Travel] ut ON t.id = ut.travel_id
         WHERE ut.user_id = @userId
       `);
 
@@ -616,7 +616,7 @@ const removeSavedTravel = async (req, res) => {
       .input("userId", user_id)
       .input("travelId", travel_id)
       .query(`
-        DELETE FROM [User_Travel] WHERE user_id = @userId AND travel_id = @travelId
+        DELETE FROM [IO].[User_Travel] WHERE user_id = @userId AND travel_id = @travelId
       `);
 
     if (deleteResult.rowsAffected[0] === 0) {
@@ -645,7 +645,7 @@ const getSavedTravel = async (req, res) => {
       .input("userId", user_id)
       .input("travelId", travel_id)
       .query(`
-        SELECT 1 FROM [User_Travel] WHERE user_id = @userId AND travel_id = @travelId
+        SELECT 1 FROM [IO].[User_Travel] WHERE user_id = @userId AND travel_id = @travelId
       `);
 
     const isSaved = result.recordset.length > 0;
@@ -668,7 +668,7 @@ const getBaggageByUser = async (req, res) => {
     const pool = await connectToDatabase();
     const result = await pool.request()
       .input("userId", userId)
-      .query("SELECT * FROM Baggage WHERE user_id = @userId");
+      .query("SELECT * FROM [IO].Baggage WHERE user_id = @userId");
 
     res.json({ success: true, baggage: result.recordset });
   } catch (err) {
@@ -696,7 +696,7 @@ const addBaggage = async (req, res) => {
       .input("has_tracker", has_tracker || false)
       .input("user_id", user_id)
       .query(`
-        INSERT INTO Baggage (brand, color, width, height, depth, wheels_count, has_tracker, user_id)
+        INSERT INTO [IO].Baggage (brand, color, width, height, depth, wheels_count, has_tracker, user_id)
         VALUES (@brand, @color, @width, @height, @depth, @wheels_count, @has_tracker, @user_id)
       `);
 
@@ -727,7 +727,7 @@ const updateBaggage = async (req, res) => {
       .input("has_tracker", has_tracker || false)
       .input("user_id", user_id)
       .query(`
-        UPDATE Baggage
+        UPDATE [IO].Baggage
         SET brand = @brand, color = @color, width = @width, height = @height,
             depth = @depth, wheels_count = @wheels_count, has_tracker = @has_tracker
         WHERE id = @id AND user_id = @user_id
@@ -751,7 +751,7 @@ const deleteBaggage = async (req, res) => {
     const pool = await connectToDatabase();
     await pool.request()
       .input("baggageId", baggageId)
-      .query("DELETE FROM Baggage WHERE id = @baggageId");
+      .query("DELETE FROM [IO].Baggage WHERE id = @baggageId");
 
     res.json({ success: true, message: "Baggage deleted successfully." });
   } catch (err) {
@@ -775,8 +775,8 @@ const getFlightCategories = async (req, res) => {
         SELECT fc.id, fc.category, fc.price_increase_percentage, fc.reserved_seat,
                fc.priority_boarding, fc.cabin_baggage, fc.check_in_baggage,
                fc.change_flight_with_no_fees
-        FROM Flight_category fc
-        JOIN Flight_Flight_category ffc ON fc.id = ffc.category_id
+        FROM [Sifrarnik].Flight_category fc
+        JOIN [IO].Flight_Flight_category ffc ON fc.id = ffc.category_id
         WHERE ffc.flight_id = @flightId
       `);
 
@@ -798,7 +798,7 @@ const getAirplaneById = async (req, res) => {
     const pool = await connectToDatabase();
     const result = await pool.request()
       .input('airplane_id', airplane_id)
-      .query(`SELECT * FROM Airplane WHERE id = @airplane_id`);
+      .query(`SELECT * FROM [IO].Airplane WHERE id = @airplane_id`);
 
     if (result.recordset.length === 0) {
       return res.status(404).json({ error: 'Airplane not found.' });

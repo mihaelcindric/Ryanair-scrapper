@@ -1,5 +1,34 @@
 const connectToDatabase = require("../db/db.config");
-const bcrypt = require("bcrypt");
+
+const getFullTableName = (tableName) => {
+  const sifrarnikTables = [
+    "Flight_category",
+    "Airport",
+    "Location"
+  ];
+
+  const ioTables = [
+    "Flight",
+    "Travel",
+    "Airplane",
+    "User_Travel",
+    "Baggage",
+    "Airport_Airport",
+    "Airport_Flight",
+    "Flight_Flight_category",
+    "Travel_Flight",
+    "Travel_Location"
+  ];
+
+  if (sifrarnikTables.includes(tableName)) {
+    return `[Sifrarnik].[${tableName}]`;
+  } else if (ioTables.includes(tableName)) {
+    return `[IO].[${tableName}]`;
+  } else {
+    return `[dbo].[${tableName}]`;
+  }
+};
+
 
 const getTableSchema = async (req, res) => {
   const { tableName } = req.body;
@@ -31,7 +60,8 @@ const getAllRecords = async (req, res) => {
 
   try {
     const pool = await connectToDatabase();
-    const result = await pool.request().query(`SELECT * FROM [${tableName}]`);
+    const fullTableName = getFullTableName(tableName);
+    const result = await pool.request().query(`SELECT * FROM ${fullTableName}`);
     res.json({ success: true, data: result.recordset });
   } catch (err) {
     console.error(`Error fetching data from ${tableName}:`, err);
@@ -49,12 +79,13 @@ const insertRecord = async (req, res) => {
 
   try {
     const pool = await connectToDatabase();
+    const fullTableName = getFullTableName(tableName);
     const request = pool.request();
     const columns = Object.keys(data).join(", ");
     const values = Object.keys(data).map((_, i) => `@p${i}`).join(", ");
 
     Object.entries(data).forEach(([key, value], i) => request.input(`p${i}`, value));
-    await request.query(`INSERT INTO [${tableName}] (${columns}) VALUES (${values})`);
+    await request.query(`INSERT INTO ${fullTableName} (${columns}) VALUES (${values})`);
 
     res.json({ success: true, message: `Inserted into ${tableName}.` });
   } catch (err) {
@@ -72,10 +103,11 @@ const deleteRecord = async (req, res) => {
 
   try {
     const pool = await connectToDatabase();
+    const fullTableName = getFullTableName(tableName);
     const request = pool.request();
 
     request.input("id", id);
-    const query = `DELETE FROM [${tableName}] WHERE id = @id`;
+    const query = `DELETE FROM ${fullTableName} WHERE id = @id`;
 
     await request.query(query);
 
@@ -99,11 +131,11 @@ const insertAirportAirport = async (req, res) => {
 
     const originResult = await pool.request()
       .input("originIata", originIata)
-      .query("SELECT id FROM Airport WHERE code = @originIata");
+      .query("SELECT id FROM Sifrarnik.Airport WHERE code = @originIata");
 
     const destinationResult = await pool.request()
       .input("destinationIata", destinationIata)
-      .query("SELECT id FROM Airport WHERE code = @destinationIata");
+      .query("SELECT id FROM Sifrarnik.Airport WHERE code = @destinationIata");
 
     if (originResult.recordset.length === 0 || destinationResult.recordset.length === 0) {
       return res.status(404).json({ error: "One or both airport codes not found in the database." });
@@ -116,7 +148,7 @@ const insertAirportAirport = async (req, res) => {
       .input("origin_id", originId)
       .input("destination_id", destinationId)
       .query(`
-        INSERT INTO Airport_Airport (origin_id, destination_id)
+        INSERT INTO [IO].Airport_Airport (origin_id, destination_id)
         VALUES (@origin_id, @destination_id)
       `);
 
@@ -141,7 +173,7 @@ const getLocationByName = async (req, res) => {
       .input("city", city)
       .input("country", country)
       .query(`
-        SELECT id FROM Location WHERE name = @city AND country = @country
+        SELECT id FROM Sifrarnik.Location WHERE name = @city AND country = @country
       `);
 
     if (result.recordset.length > 0) {
@@ -164,6 +196,7 @@ const updateRecord = async (req, res) => {
 
   try {
     const pool = await connectToDatabase();
+    const fullTableName = getFullTableName(tableName);
     const request = pool.request();
 
     const updateFields = [];
@@ -182,7 +215,7 @@ const updateRecord = async (req, res) => {
     }
 
     request.input("id", data.id);
-    const query = `UPDATE [${tableName}] SET ${updateFields.join(", ")} WHERE id = @id`;
+    const query = `UPDATE ${fullTableName} SET ${updateFields.join(", ")} WHERE id = @id`;
 
     console.log("Executing query:", query);
     await request.query(query);

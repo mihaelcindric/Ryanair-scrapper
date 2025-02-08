@@ -9,7 +9,7 @@ const login = async (req, res) => {
     const result = await pool
       .request()
       .input("email", email)
-      .query("SELECT id, first_name, last_name, date_of_birth, username, email, profile_picture_url, is_admin, password FROM [User] WHERE email = @email");
+      .query("SELECT id, first_name, last_name, date_of_birth, username, email, profile_picture_url, is_admin, password FROM [dbo].[User] WHERE email = @email");
 
     if (result.recordset.length === 0) {
       return res
@@ -49,7 +49,7 @@ const register = async (req, res) => {
       .request()
       .input('email', email)
       .input('username', username)
-      .query('SELECT * FROM [User] WHERE email = @email OR username = @username');
+      .query('SELECT * FROM [dbo].[User] WHERE email = @email OR username = @username');
 
     if (existingUser.recordset.length > 0) {
       return res.status(400).json({ success: false, message: 'User with this email or username already exists.' });
@@ -69,7 +69,7 @@ const register = async (req, res) => {
       .input('profile_picture_url', profile_picture_url || null) // Neobavezno polje
       .input('is_admin', 0)
       .query(`
-        INSERT INTO [User] (first_name, last_name, date_of_birth, username, email, password, profile_picture_url)
+        INSERT INTO [dbo].[User] (first_name, last_name, date_of_birth, username, email, password, profile_picture_url)
         VALUES (@first_name, @last_name, @date_of_birth, @username, @email, @password, @profile_picture_url)
       `);
 
@@ -93,7 +93,7 @@ const getCurrentUser = async (req, res) => {
       .query(`
         SELECT id, username, email, profile_picture_url, is_admin,
                first_name, last_name, date_of_birth
-        FROM [User]
+        FROM [dbo].[User]
         WHERE id = @userId
       `);
 
@@ -116,7 +116,7 @@ const updateProfile = async (req, res) => {
 
     const userQuery = await pool.request()
       .input('id', id)
-      .query('SELECT password FROM [User] WHERE id = @id');
+      .query('SELECT password FROM [dbo].[User] WHERE id = @id');
 
     if (userQuery.recordset.length === 0) {
       return res.status(404).json({ success: false, message: 'User not found.' });
@@ -130,7 +130,7 @@ const updateProfile = async (req, res) => {
     }
 
     let updateQuery = `
-      UPDATE [User]
+      UPDATE [dbo].[User]
       SET first_name = @first_name, last_name = @last_name, username = @username,
           email = @email, profile_picture_url = @profile_picture_url
     `;
