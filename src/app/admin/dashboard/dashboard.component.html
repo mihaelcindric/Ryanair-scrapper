@@ -1,93 +1,116 @@
-<div class="admin-dashboard">
-  <!-- Navigation between tables -->
-  <div class="table-navigation">
-    <button *ngFor="let table of tables"
-            [class.active]="selectedTable === table"
-            (click)="selectTable(table)">
-      {{ table }}
-    </button>
-  </div>
+<div class="admin-dashboard-container">
+  <!-- Sidebar navigation -->
+  <mat-sidenav-container class="sidenav-container">
+    <mat-sidenav mode="side" opened>
+      <h3>Admin Panel</h3>
+      <mat-divider></mat-divider>
+      <mat-nav-list>
+        <mat-list-item *ngFor="let table of tables" (click)="selectTable(table)" [class.active]="selectedTable === table">
+          <mat-icon>table_chart</mat-icon> {{ table }}
+        </mat-list-item>
+      </mat-nav-list>
+    </mat-sidenav>
 
-  <!--Navigation between 'Examine' and 'Insert' -->
-  <div class="action-navigation">
-    <button [class.active]="currentAction === 'examine'" (click)="setAction('examine')">Examine</button>
-    <button [class.active]="currentAction === 'insert'" (click)="setAction('insert')">Insert</button>
-  </div>
+    <mat-sidenav-content>
+      <mat-toolbar color="primary">
+        <span>Dashboard - {{ selectedTable }}</span>
+      </mat-toolbar>
 
-  <!-- Displaying table data if 'Examine' -->
-  <div *ngIf="currentAction === 'examine'" class="table-container">
-    <table>
-      <thead>
-      <tr>
-        <th *ngFor="let column of tableColumns">{{ column.name }}</th>
-        <th>Actions</th>
-      </tr>
-      </thead>
-      <tbody>
-      <tr *ngFor="let row of tableData">
-        <td *ngFor="let column of tableColumns">
-          <input *ngIf="row.isEditing && getInputType(column.type) === 'checkbox'"
-                 [(ngModel)]="row[column.name]"
-                 type="checkbox" />
+      <!-- Examine/Insert mode -->
+      <mat-tab-group [(selectedIndex)]="currentActionIndex">
+        <mat-tab label="Examine">
+          <div class="table-container" *ngIf="!loading; else loadingSpinner">
+            <table mat-table [dataSource]="tableData" class="mat-elevation-z8">
 
-          <input *ngIf="row.isEditing && (getInputType(column.type) === 'datetime-local' || getInputType(column.type) === 'date')"
-                 [(ngModel)]="row[column.name]"
-                 [type]="getInputType(column.type)" />
+              <ng-container *ngFor="let column of tableColumns" [matColumnDef]="column.name">
+                <th mat-header-cell *matHeaderCellDef> {{ column.name }} </th>
+                <td mat-cell *matCellDef="let row">
+                  <ng-container *ngIf="row.isEditing; else readonlyValue">
+                    <ng-container *ngIf="getInputType(column.type) === 'checkbox'; else inputField">
+                      <mat-checkbox [(ngModel)]="row[column.name]" name="{{ column.name }}"></mat-checkbox>
+                    </ng-container>
+                    <ng-template #inputField>
+                      <input matInput [(ngModel)]="row[column.name]" [type]="getInputType(column.type)">
+                    </ng-template>
+                  </ng-container>
+                  <ng-template #readonlyValue>
+                    <ng-container *ngIf="getInputType(column.type) === 'checkbox'; else textValue">
+                      <mat-checkbox [checked]="row[column.name]" disabled></mat-checkbox>
+                    </ng-container>
+                    <ng-template #textValue>{{ row[column.name] }}</ng-template>
+                  </ng-template>
+                </td>
+              </ng-container>
 
-          <input *ngIf="row.isEditing && getInputType(column.type) !== 'checkbox' && getInputType(column.type) !== 'datetime-local' && getInputType(column.type) !== 'date'"
-                 [(ngModel)]="row[column.name]"
-                 [type]="getInputType(column.type)"
-                 [required]="!column.nullable" />
+              <!-- Edit/Delete row -->
+              <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef> Actions </th>
+                <td mat-cell *matCellDef="let row">
+                  <button mat-icon-button color="primary" (click)="editRow(row)">
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                  <button mat-icon-button color="warn" (click)="deleteRow(row.id)">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </td>
+              </ng-container>
 
+              <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+            </table>
+          </div>
+        </mat-tab>
 
-          <span *ngIf="!row.isEditing">{{ row[column.name] }}</span>
-        </td>
-        <td>
-          <button *ngIf="!row.isEditing" (click)="editRow(row)">Edit</button>
-          <button *ngIf="row.isEditing" (click)="saveRow(row)">Save</button>
-          <button class="delete-btn" (click)="deleteRow(row.id)">Delete</button>
-        </td>
-      </tr>
-      </tbody>
-    </table>
-  </div>
+        <mat-tab label="Insert">
+          <div class="insert-form">
+            <h3>Insert New {{ selectedTable }} Entry</h3>
+            <form (ngSubmit)="insertRow()">
+              <div *ngFor="let column of tableColumns" class="input-field-container">
+                <ng-container *ngIf="getInputType(column.type) !== 'checkbox'">
+                  <mat-form-field appearance="outline" *ngIf="column.type !== 'time'">
+                    <mat-label>{{ column.name }}</mat-label>
+                    <input matInput [(ngModel)]="newRow[column.name]" name="{{ column.name }}" [type]="getInputType(column.type)">
+                  </mat-form-field>
+                  <mat-form-field appearance="outline" *ngIf="column.type === 'time'">
+                    <mat-label>{{ column.name }}</mat-label>
+                    <input matInput [(ngModel)]="newRow[column.name]" name="{{ column.name }}"
+                           [type]="getInputType(column.type)" placeholder="hh:mm:ss" (input)="formatDurationInput(newRow[column.name], column.name)">
+                  </mat-form-field>
+                </ng-container>
+              </div>
+              <div class="checkbox-group">
+                <div *ngFor="let column of tableColumns" class="checkbox-container">
+                  <ng-container *ngIf="getInputType(column.type) === 'checkbox'">
+                    <mat-checkbox [(ngModel)]="newRow[column.name]" name="{{ column.name }}">
+                      {{ column.name }}
+                    </mat-checkbox>
+                  </ng-container>
+                </div>
+              </div>
 
-  <!-- Insert form if 'Insert' -->
-  <div *ngIf="currentAction === 'insert'" class="insert-form">
-    <h3>Insert New {{ selectedTable }} Entry</h3>
-    <form (ngSubmit)="insertRow()">
-      <div *ngFor="let column of tableColumns">
-        <label>{{ column.name }}</label>
+              <button mat-raised-button color="primary" type="submit">Insert</button>
+            </form>
+          </div>
+        </mat-tab>
+      </mat-tab-group>
 
-        <input *ngIf="getInputType(column.type) === 'checkbox'"
-               [(ngModel)]="newRow[column.name]"
-               type="checkbox"
-               name="{{ column.name }}" />
-
-        <input *ngIf="getInputType(column.type) === 'time'"
-               [(ngModel)]="newRow[column.name]"
-               (input)="formatTimeInput(column.name)"
-               type="text"
-               name="{{ column.name }}"
-               placeholder="hh:mm:ss"
-               maxlength="8" />
-
-        <input *ngIf="getInputType(column.type) !== 'checkbox' && getInputType(column.type) !== 'time'"
-               [(ngModel)]="newRow[column.name]"
-               name="{{ column.name }}"
-               [type]="getInputType(column.type)"
-               [required]="!column.nullable" />
+      <!-- Updating airports and locations -->
+      <div class="refresh-container">
+        <button mat-raised-button color="accent" (click)="refreshAirportsAndLocations()">
+          <mat-icon>refresh</mat-icon> Refresh Airports & Locations
+        </button>
       </div>
+    </mat-sidenav-content>
+  </mat-sidenav-container>
 
-      <button type="submit" [disabled]="!isFormValid(newRow)">Insert</button>
-    </form>
-  </div>
+  <!-- Loading spinner -->
+  <ng-template #loadingSpinner>
+    <div class="spinner-container">
+      <mat-progress-spinner mode="indeterminate"></mat-progress-spinner>
+    </div>
+  </ng-template>
 
-  <!-- Refresh airports and locations -->
-  <div class="refresh-container">
-    <button (click)="refreshAirportsAndLocations()">Refresh airports and locations</button>
-  </div>
-
+  <!-- Popup message -->
   <div *ngIf="popupMessage" class="popup-message" [ngClass]="popupType">
     {{ popupMessage }}
   </div>

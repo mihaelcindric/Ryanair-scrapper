@@ -3,280 +3,156 @@ import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { AdminService } from '../../services/admin.service';
 import {HttpClient} from '@angular/common/http';
+import {MatSidenavModule} from '@angular/material/sidenav';
+import {MatDividerModule} from '@angular/material/divider';
+import {MatListModule} from '@angular/material/list';
+import {MatIconModule} from '@angular/material/icon';
+import {MatToolbarModule} from '@angular/material/toolbar';
+import {MatTabsModule} from '@angular/material/tabs';
+import {MatTableModule} from '@angular/material/table';
+import {MatInputModule} from '@angular/material/input';
+import {MatButtonModule} from '@angular/material/button';
+import {MatProgressSpinnerModule} from '@angular/material/progress-spinner';
+import {MatCheckboxModule} from '@angular/material/checkbox';
 
 @Component({
   selector: 'app-dashboard',
   templateUrl: './dashboard.component.html',
   imports: [
     FormsModule,
-    CommonModule
+    CommonModule,
+    MatSidenavModule,
+    MatDividerModule,
+    MatListModule,
+    MatIconModule,
+    MatToolbarModule,
+    MatTabsModule,
+    MatTableModule,
+    MatInputModule,
+    MatButtonModule,
+    MatProgressSpinnerModule,
+    MatCheckboxModule
   ],
   styleUrls: ['./dashboard.component.css']
 })
 export class DashboardComponent {
   tables = ['Airplane', 'Airport', 'Baggage', 'Flight', 'Flight_category', 'Location', 'Travel', 'User'];
   selectedTable: string = this.tables[0];
-  currentAction: string = 'examine';
+  currentActionIndex = 0;
 
   tableSchema: any[] = [];
   tableColumns: any[] = [];
   tableData: any[] = [];
   newRow: any = {};
   loading: boolean = false;
+  displayedColumns: string[] = [];
 
   constructor(private adminService: AdminService, private http: HttpClient) {
-    this.loadTableSchema();
-    this.loadTableData();
+    this.loadTable();
   }
 
-  /** Postavlja trenutno odabranu tablicu i dohvaća njenu strukturu i podatke **/
-  selectTable(table: string) {
-    this.selectedTable = table;
-    this.loadTableSchema();
-    this.loadTableData();
-    this.newRow = {};
-  }
-
-  /** Postavlja način rada (Examine ili Insert) **/
-  setAction(action: string) {
-    this.currentAction = action;
-    this.newRow = {};
-
-  }
-
-  /** Dohvaća strukturu tablice iz baze **/
-  loadTableSchema() {
+  loadTable() {
     this.loading = true;
     this.adminService.getTableSchema(this.selectedTable).subscribe({
       next: (response) => {
-        this.tableSchema = response.schema;
-        this.tableColumns = response.schema.map((col: { column_name: any; data_type: any; is_nullable: string; }) => ({
+        this.tableColumns = response.schema.map((col: any) => ({
           name: col.column_name,
           type: col.data_type,
-          nullable: col.is_nullable === 'YES'
+          nullable: col.nullable === 'YES',
         }));
-        console.log(this.tableColumns);
-        this.loading = false;
-      },
-      error: (err) => {
-        console.error('Error fetching table schema:', err);
-        this.loading = false;
-      }
-    });
-  }
+        this.displayedColumns = [...this.tableColumns.map(col => col.name), 'actions'];
 
-  /** Dohvaća podatke iz baze na temelju odabrane tablice **/
-  loadTableData() {
-    this.loading = true;
-    let dataObservable;
-
-    switch (this.selectedTable) {
-      case 'Airplane': dataObservable = this.adminService.getAllAirplanes(); break;
-      case 'Airport': dataObservable = this.adminService.getAllAirports(); break;
-      case 'Baggage': dataObservable = this.adminService.getAllBaggage(); break;
-      case 'Flight': dataObservable = this.adminService.getAllFlights(); break;
-      case 'Flight_category': dataObservable = this.adminService.getAllFlightCategories(); break;
-      case 'Location': dataObservable = this.adminService.getAllLocations(); break;
-      case 'Travel': dataObservable = this.adminService.getAllTravels(); break;
-      case 'User': dataObservable = this.adminService.getAllUsers(); break;
-      default: this.loading = false; return;
-    }
-
-    dataObservable.subscribe({
-      next: (response) => {
-        this.tableData = response.data.map((row: { [x: string]: string; }) => {
-          let newRow = { ...row };
-          this.tableColumns.forEach(col => {
-            // Ako je password polje, prikazujemo ******** umjesto stvarne vrijednosti
-            if (col.type === 'varbinary') {
-              newRow[col.name] = '********';
-            }
-
-            // Ako je datum, formatiramo ga ispravno
-            if (col.type === 'datetime' || col.type === 'datetime2' || col.type === 'date') {
-              newRow[col.name] = this.formatDateForInput(row[col.name], col.type === 'date' ? 'date' : 'datetime-local');
-            }
-            else if (col.type === 'time') {
-              newRow[col.name] = this.formatDateForInput(row[col.name], col.type);
-            }
-          });
-          return newRow;
+        this.adminService.getTableData(this.selectedTable).subscribe({
+          next: (res) => {
+            this.tableData = Array.isArray(res.data) ? res.data : [];
+            console.log("✅ Table Data:", this.tableData);
+            this.loading = false;
+          },
+          error: (err) => this.handleError(err, 'Error fetching table data')
         });
-
-        console.log(`Data for ${this.selectedTable}:`, this.tableData);
-        this.loading = false;
       },
-      error: (err) => {
-        console.error(`Error fetching data for ${this.selectedTable}:`, err);
-        this.loading = false;
-      }
+      error: (err) => this.handleError(err, 'Error fetching table schema')
     });
   }
 
-  /** Ispravlja format datuma za datetime-local input **/
-  formatDateForInput(value: string, type: string): string {
-    if (!value) return '';
-    const date = new Date(value);
 
-    console.log(value)
-    console.log(type)
+  selectTable(table: string) {
+    this.selectedTable = table;
+    this.newRow = {};
 
-    if (type === 'time') {
-      return value.substring(0, 8);
+    if (this.selectedTable === 'Flight' || this.selectedTable === 'Travel') {
+      this.newRow['inserted_on'] = this.getCurrentDateTime();
     }
 
-    if (type === 'date') {
-      // Format za <input type="date">: "YYYY-MM-DD"
-      return date.toISOString().split('T')[0];
-    }
-
-    if (type === 'datetime-local') {
-      // Format za <input type="datetime-local">: "YYYY-MM-DDTHH:mm"
-      return date.toISOString().slice(0, 16);
-    }
-
-    return ''
+    this.loadTable();
   }
 
-  /** Omogućuje uređivanje retka u tablici **/
-  editRow(row: any) {
-    row.isEditing = true;
-  }
 
-  /** Sprema promjene u retku ako su sva obavezna polja popunjena **/
-  saveRow(row: any) {
-    if (this.isFormValid(row)) {
-      row.isEditing = false;
-      console.log('Updated row:', row);
-    } else {
-      alert('Please fill in all required fields.');
-    }
-  }
-
-  /** Briše redak iz baze i ažurira prikaz tablice **/
   deleteRow(id: number) {
-    if (!confirm(`Are you sure you want to delete this record (ID: ${id})?`)) {
-      return; // Ako korisnik odustane, ne brišemo
+    if (confirm(`Are you sure you want to delete record (ID: ${id})?`)) {
+      this.adminService.deleteRecord(this.selectedTable, id).subscribe({
+        next: () => {
+          this.tableData = this.tableData.filter(row => row.id !== id);
+          this.showPopupMessage(`Record deleted successfully!`, 'success');
+        },
+        error: (err: any) => this.handleError(err, 'Error deleting record')
+      });
     }
-
-    let deleteObservable;
-
-    switch (this.selectedTable) {
-      case 'Airplane': deleteObservable = this.adminService.deleteAirplane(id); break;
-      case 'Airport': deleteObservable = this.adminService.deleteAirport(id); break;
-      case 'Baggage': deleteObservable = this.adminService.deleteBaggage(id); break;
-      case 'Flight': deleteObservable = this.adminService.deleteFlight(id); break;
-      case 'Flight_category': deleteObservable = this.adminService.deleteFlightCategory(id); break;
-      case 'Location': deleteObservable = this.adminService.deleteLocation(id); break;
-      case 'Travel': deleteObservable = this.adminService.deleteTravel(id); break;
-      case 'User': deleteObservable = this.adminService.deleteUser(id); break;
-      default: return;
-    }
-
-    deleteObservable.subscribe({
-      next: () => {
-        this.tableData = this.tableData.filter(row => row.id !== id); // Ažuriraj prikaz tablice
-        this.showPopupMessage(`Record deleted successfully!`, 'success');
-      },
-      error: (err) => {
-        console.error('Error deleting record:', err);
-        this.showPopupMessage('Error deleting record. Check logs.', 'error');
-      }
-    });
   }
 
-
-  /** Dodaje novi redak u tablicu ako su sva obavezna polja popunjena **/
   insertRow() {
     if (this.isFormValid(this.newRow)) {
-      let insertObservable;
-
-      // Prije slanja, formatiramo sve datetime vrijednosti
       this.tableColumns.forEach(column => {
-        if (column.type === 'datetime' || column.type === 'datetime2' || column.type === 'date') {
-          if (this.newRow[column.name]) {
-            this.newRow[column.name] = this.formatDateForSQL(this.newRow[column.name], column.type);
-          }
+        const colType = this.getInputType(column.type);
+
+        if (colType === 'checkbox') {
+          this.newRow[column.name] = this.newRow[column.name] ?? (column.nullable ? null : false);
+        }
+
+        if (colType === 'date' || colType === 'datetime-local' || colType === 'time') {
+          this.newRow[column.name] = this.formatDateForSQL(this.newRow[column.name], column.type);
+        }
+
+        if (column.name.toLowerCase().includes('duration') || column.name.toLowerCase().includes('time')) {
+          this.newRow[column.name] = this.formatDateForSQL(this.newRow[column.name], 'duration');
         }
       });
 
-      switch (this.selectedTable) {
-        case 'Airplane': insertObservable = this.adminService.insertAirplane(this.newRow); break;
-        case 'Airport': insertObservable = this.adminService.insertAirport(this.newRow); break;
-        case 'Baggage': insertObservable = this.adminService.insertBaggage(this.newRow); break;
-        case 'Flight': insertObservable = this.adminService.insertFlight(this.newRow); break;
-        case 'Flight_category': insertObservable = this.adminService.insertFlightCategory(this.newRow); break;
-        case 'Location': insertObservable = this.adminService.insertLocation(this.newRow); break;
-        case 'Travel': insertObservable = this.adminService.insertTravel(this.newRow); break;
-        case 'User': insertObservable = this.adminService.insertUser(this.newRow); break;
-        default: return;
-      }
-
-      insertObservable.subscribe({
-        next: (response) => {
-          console.log('Inserted successfully:', response);
-          this.loadTableData();
+      this.adminService.insertRecord(this.selectedTable, this.newRow).subscribe({
+        next: () => {
+          this.loadTable();
           this.newRow = {};
+          this.showPopupMessage('Inserted successfully!', 'success');
         },
-        error: (err) => {
-          console.error('Error inserting data:', err);
-        }
+        error: (err: any) => this.handleError(err, 'Error inserting record')
       });
     } else {
       alert('Please fill in all required fields.');
     }
   }
 
-  /** Formatira datum za SQL Server format (YYYY-MM-DD HH:MM:SS za DATETIME i DATETIME2) **/
-  formatDateForSQL(value: string | Date, type: string): string {
-    if (!value) return '';
+  editRow(row: any) {
+    if (row.isEditing) {
+      if (this.isFormValid(row)) {
+        const updatedRow = { ...row };
+        delete updatedRow.isEditing;
 
-    const date = value instanceof Date ? value : new Date(value);
-
-    if (isNaN(date.getTime())) {
-      console.error('Invalid date passed to formatDateForSQL:', value);
-      return '';
+        this.adminService.updateRecord(this.selectedTable, updatedRow).subscribe({
+          next: () => {
+            row.isEditing = false;
+            this.showPopupMessage(`Updated successfully!`, 'success');
+          },
+          error: (err) => this.handleError(err, 'Error updating record')
+        });
+      } else {
+        alert('Please fill in all required fields.');
+      }
+    } else {
+      row.isEditing = true;
     }
-
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    const seconds = String(date.getSeconds()).padStart(2, '0');
-
-    if (type === 'date') {
-      return `${year}-${month}-${day}`;
-    }
-
-    if (type === 'datetime' || type === 'datetime2') {
-      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-    }
-
-    console.error('Unsupported SQL date type:', type);
-    return '';
   }
 
-  /** Forsira unos vremena u formatu hh:mm:ss */
-  formatTimeInput(columnName: string) {
-    let value = this.newRow[columnName];
 
-    value = value.replace(/\D/g, '');
-
-    if (value.length > 6) {
-      value = value.substring(0, 6);
-    }
-
-    if (value.length > 4) {
-      value = `${value.substring(0, 2)}:${value.substring(2, 4)}:${value.substring(4)}`;
-    } else if (value.length > 2) {
-      value = `${value.substring(0, 2)}:${value.substring(2)}`;
-    }
-
-    this.newRow[columnName] = value;
-  }
-
-  /** Osvježava podatke o aerodromima i lokacijama **/
   refreshAirportsAndLocations() {
     const apiUrl = 'https://www.ryanair.com/api/views/locate/5/airports/en/active';
 
@@ -298,7 +174,56 @@ export class DashboardComponent {
     });
   }
 
-  /** Dohvaća i zapisuje aktivne aerodromske rute **/
+  async insertAirports(airportData: any[]) {
+    let successCount = 0;
+    let errorCount = 0;
+
+    for (const airport of airportData) {
+      try {
+        const locationResponse = await this.adminService.getLocationByName(airport.city.name, airport.country.name).toPromise();
+        const locationId = locationResponse?.id || null;
+
+        await this.adminService.insertRecord('Airport', {
+          code: airport.code,
+          name: airport.name,
+          url: null,
+          location_id: locationId,
+          latitude: airport.coordinates.latitude,
+          longitude: airport.coordinates.longitude
+        }).toPromise();
+
+        successCount++;
+      } catch (err) {
+        console.error(`Error inserting airport ${airport.code}:`, err);
+        errorCount++;
+      }
+    }
+
+    console.log('Airports inserted successfully.');
+
+    if (errorCount === 0) {
+      this.showPopupMessage('Airports inserted successfully!', 'success');
+    } else {
+      this.showPopupMessage(`Inserted with ${errorCount} errors. Check logs.`, 'error');
+    }
+  }
+
+  async insertLocations(airportData: any[]) {
+    for (const item of airportData) {
+      try {
+        await this.adminService.insertRecord('Location', {
+          name: item.city.name,
+          country: item.country.name,
+          timezone: item.timeZone
+        }).toPromise();
+      } catch (err) {
+        console.error(`Error inserting location:`, err);
+      }
+    }
+    console.log('Locations inserted successfully.');
+  }
+
+
   async insertAirportRelationships(airports: any[]) {
     console.log("🔄 Fetching and inserting airport relationships...");
 
@@ -337,80 +262,102 @@ export class DashboardComponent {
   }
 
 
-  /** Unosi lokacije u bazu **/
-  async insertLocations(airportData: any[]) {
-    const locations = airportData.map(item => ({
-      name: item.city.name,
-      country: item.country.name,
-      timezone: item.timeZone
-    }));
+  isFormValid(row: any): boolean {
+    return this.tableColumns.every(column => {
+      const value = row[column.name];
 
-    for (const location of locations) {
-      await this.adminService.insertLocation(location).toPromise();
-    }
+      // If checkbox, skip the check
+      if (this.getInputType(column.type) === 'checkbox') {
+        return true;
+      }
 
-    console.log('Locations inserted successfully.');
+      // If nullable, skip the check
+      return column.nullable || (value !== undefined && value !== null && value !== '');
+    });
   }
 
   popupMessage: string | null = null;
   popupType: string = 'success';
 
-  /** Prikazuje poruku i automatski je skriva nakon 3 sekunde **/
   showPopupMessage(message: string, type: 'success' | 'error') {
     this.popupMessage = message;
     this.popupType = type;
-
-    setTimeout(() => {
-      this.popupMessage = null;
-    }, 3000);
+    setTimeout(() => { this.popupMessage = null; }, 3000);
   }
 
-  /** Unosi aerodrome u bazu, povezuje ih s lokacijama **/
-  async insertAirports(airportData: any[]) {
-    let successCount = 0;
-    let errorCount = 0;
+  private handleError(error: any, message: string) {
+    console.error(message, error);
+    this.showPopupMessage(message, 'error');
+    this.loading = false;
+  }
 
-    for (const airport of airportData) {
-      try {
-        const locationResponse = await this.adminService.getLocationByName(airport.city.name, airport.country.name).toPromise();
-        const locationId = locationResponse?.id || null;
+  getCurrentDateTime(): string {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
 
-        const airportData = {
-          code: airport.code,
-          name: airport.name,
-          url: null,
-          location_id: locationId
-        };
+    return `${year}-${month}-${day} ${hours}:${minutes}`;
+  }
 
-        await this.adminService.insertAirport(airportData).toPromise();
-        successCount++;
-      } catch (err) {
-        console.error(`Error inserting airport ${airport.code}:`, err);
-        errorCount++;
-      }
+  formatDateForSQL(value: string | Date, type: string): string {
+    if (!value) return '';
+
+    const date = value instanceof Date ? value : new Date(value);
+
+    if (isNaN(date.getTime())) {
+      console.error('❌ Invalid date passed to formatDateForSQL:', value);
+      return '';
     }
 
-    console.log('Airports inserted successfully.');
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const seconds = String(date.getSeconds()).padStart(2, '0');
 
-    if (errorCount === 0) {
-      this.showPopupMessage('Airports inserted successfully!', 'success');
-    } else {
-      this.showPopupMessage(`Inserted with ${errorCount} errors. Check logs.`, 'error');
+    if (type === 'date') {
+      return `${year}-${month}-${day}`;
     }
+
+    if (type === 'datetime' || type === 'datetime2') {
+      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    }
+
+    if (type === 'time' || type === 'duration') {
+      return `${hours}:${minutes}:${seconds}`;
+    }
+
+    console.error('Unsupported SQL date type:', type);
+    return '';
+  }
+
+  formatDurationInput(value: string, columnName: string) {
+    if (!value) return;
+
+    let formattedValue = value.replace(/\D/g, '');
+
+    if (formattedValue.length > 2 && formattedValue.length <= 4) {
+      formattedValue = `${formattedValue.substring(0, 2)}:${formattedValue.substring(2)}`;
+    } else if (formattedValue.length > 4) {
+      formattedValue = `${formattedValue.substring(0, 2)}:${formattedValue.substring(2, 4)}:${formattedValue.substring(4, 6)}`;
+    }
+
+    if (formattedValue.length > 8) {
+      formattedValue = formattedValue.substring(0, 8);
+    }
+
+    const [hh, mm, ss] = formattedValue.split(':').map(v => parseInt(v, 10));
+    if (hh > 99 || mm > 59 || (ss !== undefined && ss > 59)) return;
+
+    this.newRow[columnName] = formattedValue;
   }
 
 
-  /** Provjerava jesu li sva obavezna polja popunjena **/
-  isFormValid(row: any): boolean {
-    return this.tableColumns.every(column => {
-      if (this.getInputType(column.type) === 'checkbox') {
-        return true;
-      }
-      return column.nullable || (row[column.name] !== undefined && row[column.name] !== '');
-    });
-  }
 
-  /** Vraća tip input polja na temelju tipa iz baze **/
   getInputType(dataType: string): string {
     switch (dataType) {
       case 'int':
@@ -424,7 +371,7 @@ export class DashboardComponent {
       case 'real':
         return 'number';
       case 'time':
-        return 'time';
+        return 'text';
       case 'date':
         return 'date';
       case 'datetime':
@@ -438,4 +385,6 @@ export class DashboardComponent {
         return 'text';
     }
   }
+
+  protected readonly name = name;
 }

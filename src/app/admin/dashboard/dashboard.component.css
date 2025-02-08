@@ -1,184 +1,117 @@
-.admin-dashboard {
+.admin-dashboard-container {
+  display: flex;
+  height: 100vh;
+}
+
+/* Sidebar */
+mat-sidenav {
+  width: 250px;
+  padding: 15px;
+  background: #f8f9fa;
+}
+
+mat-list-item {
+  cursor: pointer;
+  padding: 10px;
+  border-radius: 5px;
+}
+
+mat-list-item.active {
+  background: #073590;
+  color: white;
+}
+
+/* Main content */
+mat-sidenav-content {
+  flex: 1;
   padding: 20px;
-  max-width: 1200px;
-  margin: auto;
-  text-align: center;
 }
 
-/* Navigacija tablica */
-.table-navigation {
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 20px;
-}
-
-.table-navigation button {
-  background-color: #f1c933;
-  border: none;
-  padding: 10px 15px;
-  cursor: pointer;
+/* Toolbar */
+mat-toolbar {
+  font-size: 20px;
   font-weight: bold;
-  border-radius: 5px;
-  transition: 0.3s;
 }
 
-.table-navigation button.active {
-  background-color: #073590;
-  color: white;
-}
-
-/* Navigacija između 'Examine' i 'Insert' */
-.action-navigation {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-  margin-bottom: 20px;
-}
-
-.action-navigation button {
-  padding: 8px 15px;
-  border: none;
-  background-color: #f1c933;
-  cursor: pointer;
-  border-radius: 5px;
-}
-
-.action-navigation button.active {
-  background-color: #073590;
-  color: white;
-}
-
-/* Tablica podataka */
+/* Table */
 .table-container {
+  margin-top: 20px;
   overflow-x: auto;
 }
 
-table {
+.mat-table {
   width: 100%;
-  border-collapse: collapse;
-  margin-top: 20px;
 }
 
-th, td {
-  padding: 10px;
-  border-bottom: 1px solid #ddd;
-}
-
-th {
+.mat-header-cell {
+  font-weight: bold;
   background-color: #073590;
   color: white;
 }
 
-td input {
-  width: 100%;
-  padding: 5px;
-}
-
-.delete-btn {
-  background-color: red;
-  color: white;
-  border: none;
-  padding: 5px 10px;
-  cursor: pointer;
-}
-
-.delete-btn:hover {
-  background-color: darkred;
-}
-
-/* Insert forma */
-.insert-form {
-  background-color: #fff;
-  padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-  max-width: 500px;
-  margin: auto;
-}
-
-.insert-form h3 {
-  color: #073590;
-}
-
-.insert-form form {
-  display: flex;
-  flex-direction: column;
-}
-
-.insert-form label {
-  font-weight: bold;
-  margin-top: 10px;
-}
-
-.insert-form input {
+.mat-cell {
   padding: 8px;
-  margin-top: 5px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
 }
 
-.insert-form button {
-  background-color: #f1c933;
-  border: none;
-  padding: 10px;
-  margin-top: 15px;
-  cursor: pointer;
-  font-weight: bold;
+/* Forms */
+.insert-form {
+  max-width: 500px;
+  margin: 20px auto;
+  padding: 0 10px;
 }
 
-.insert-form button:hover {
-  background-color: #073590;
-  color: white;
+mat-form-field {
+  width: 100%;
+  margin-bottom: 15px;
 }
 
-
-.refresh-container {
-  margin-top: 20px;
-  text-align: center;
-}
-.refresh-container button {
-  background-color: #073590;
-  color: white;
-  padding: 10px 15px;
-  border: none;
-  cursor: pointer;
-  font-size: 16px;
-}
-.refresh-container button:hover {
-  background-color: #f1c933;
+button {
+  margin: 5px 0;
 }
 
 
-/* Popup poruka */
+
+.checkbox-group {
+  border-top: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+.checkbox-container {
+  display: flex;
+  align-items: center;
+}
+
+mat-checkbox {
+  margin-bottom: 10px;
+}
+
+
+
+/* Popup message */
 .popup-message {
   position: fixed;
-  bottom: -100px; /* Početna pozicija (skriveno) */
+  bottom: 30px;
   left: 50%;
   transform: translateX(-50%);
-  padding: 15px 20px;
-  color: white;
-  font-size: 16px;
+  padding: 15px;
   border-radius: 5px;
   text-align: center;
   min-width: 250px;
   max-width: 80%;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
-  transition: bottom 0.5s ease-in-out;
+  z-index: 999;
 }
 
-/* Kada se pojavi, dolazi s dna */
-.popup-message.show {
-  bottom: 30px;
-}
-
-/* Stilovi za uspješan unos */
 .success {
   background-color: #28a745;
 }
 
-/* Stilovi za grešku */
 .error {
   background-color: #dc3545;
+}
+
+/* Spinner */
+.spinner-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
 }
