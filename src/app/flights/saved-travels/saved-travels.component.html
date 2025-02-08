@@ -1,0 +1,27 @@
+<div class="saved-travels-container">
+  <h2>Saved Travels</h2>
+
+  <div *ngIf="savedTravels.length === 0">
+    <p>You have no saved travels yet.</p>
+  </div>
+
+  <div *ngFor="let destination of groupedTravels | keyvalue">
+    <h3>{{ destination.key }}</h3>
+
+    <div class="travel-cards">
+      <div *ngFor="let travel of destination.value" class="travel-card" (click)="openTravelDetail(travel)">
+        <div class="travel-card-header">
+          <h3>{{ travel.start_city }} → {{ travel.destination_city }}</h3>
+          <p class="price">{{ travel.total_price | currency:'EUR' }}</p>
+        </div>
+
+        <div class="travel-card-details">
+          <p><strong>Start Airport:</strong> {{ travel.start_airport }} ({{ travel.start_country }})</p>
+          <p><strong>Destination Airport:</strong> {{ travel.destination_airport }} ({{ travel.destination_country }})</p>
+          <p><strong>Period:</strong> {{ travel.period_start | date:'yyyy-MM-dd' }} → {{ travel.period_end | date:'yyyy-MM-dd' }}</p>
+          <p><strong>Flights:</strong> {{ travel.number_of_flights }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

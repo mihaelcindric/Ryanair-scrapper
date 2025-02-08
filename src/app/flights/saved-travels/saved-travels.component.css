@@ -1,0 +1,73 @@
+.saved-travels-container {
+  padding: 20px;
+  background-color: #f9f9f9;
+}
+
+h2 {
+  text-align: center;
+  color: #073590;
+}
+
+h3 {
+  margin-top: 20px;
+  color: #3369f1;
+}
+
+.travel-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  justify-content: center;
+}
+
+.travel-card {
+  width: 30%;
+  padding: 15px;
+  border-radius: 8px;
+  background: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.travel-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  background-color: #f4e3a3;
+}
+
+.travel-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.travel-card-header h3 {
+  font-size: 1.4rem;
+  color: #3369f1;
+}
+
+.price {
+  font-size: 1.4rem;
+  font-weight: bold;
+  color: #073590;
+}
+
+.travel-card-details p {
+  font-size: 0.9rem;
+  color: #444;
+  margin: 4px 0;
+}
+
+@media (max-width: 768px) {
+  .travel-card {
+    width: 45%;
+  }
+}
+
+@media (max-width: 480px) {
+  .travel-card {
+    width: 100%;
+  }
+}
