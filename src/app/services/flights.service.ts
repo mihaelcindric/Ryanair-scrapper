@@ -10,20 +10,6 @@ export class FlightsService {
 
   constructor(private http: HttpClient) {}
 
-  searchFlights(from: string, to: string, periodStart: string, periodEnd: string): Observable<any> {
-    console.log(`🔍 searchFlights() called with: from=${from}, to=${to}, periodStart=${periodStart}, periodEnd=${periodEnd}`);
-
-    if (!from || !to || !periodStart || !periodEnd) {
-      console.warn("⚠️ searchFlights called with missing parameters!");
-    }
-
-    return this.http.get(`${this.apiUrl}/flights/search?from=${from}&to=${to}&periodStart=${periodStart}&periodEnd=${periodEnd}`);
-
-  }
-
-  getAirportCodes(): Observable<any> {
-    return this.http.get(`${this.apiUrl}/flights/airport-codes`);
-  }
 
   getAllLocations(): Observable<any> {
     return this.http.get(`${this.apiUrl}/flights/locations`);
@@ -44,10 +30,6 @@ export class FlightsService {
 
   getConnectedAirports(airportCode: string): Observable<string[]> {
     return this.http.get<string[]>(`${this.apiUrl}/flights/connected-airports/${airportCode}`);
-  }
-
-  getStoredFlights(fromAirports: string[], toAirports: string[], periodStart: string, periodEnd: string): Observable<any[]> {
-    return this.http.post<any[]>(`${this.apiUrl}/flights/stored-flights`, { fromAirports, toAirports, periodStart, periodEnd });
   }
 
   addTravel(travelData: any): Observable<any> {
@@ -117,4 +99,13 @@ export class FlightsService {
   deleteBaggage(baggageId: number): Observable<any> {
     return this.http.post(`${this.apiUrl}/flights/baggage/delete`, { baggageId });
   }
+
+  getFlightCategories(flightId: number): Observable<any[]> {
+    return this.http.post<any[]>(`${this.apiUrl}/flights/flights/categories`, { flightId });
+  }
+
+  getAirplaneById(airplaneId: number): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/flights/getAirplaneById`, { airplane_id: airplaneId });
+  }
+
 }
