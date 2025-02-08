@@ -1,11 +1,12 @@
-import {Component, Inject, OnInit, Output} from '@angular/core';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import {Component, Inject, OnInit} from '@angular/core';
+import {MAT_DIALOG_DATA, MatDialog, MatDialogRef} from '@angular/material/dialog';
 import { CommonModule, CurrencyPipe, DatePipe, DecimalPipe } from '@angular/common';
-import { FlightsService } from '../../services/flights.service'; // Provjerite putanju!
+import { FlightsService } from '../../services/flights.service';
 import { AuthService, User } from '../../services/auth.service';
 import {take} from 'rxjs';
-import EventEmitter from 'node:events';
 import {MatButton} from '@angular/material/button';
+import {MatIcon} from '@angular/material/icon';
+import {FlightCategoryDialogComponent} from '../flight-category-dialog/flight-category-dialog.component';
 
 
 export interface TravelDetailData {
@@ -20,7 +21,8 @@ export interface TravelDetailData {
     CurrencyPipe,
     DecimalPipe,
     CommonModule,
-    MatButton
+    MatButton,
+    MatIcon
   ],
   styleUrls: ['./travel-detail.component.css']
 })
@@ -28,12 +30,14 @@ export class TravelDetailComponent implements OnInit {
   selectedFlight: any = null;
   user: User | null = null;
   isSaved: Boolean = false;
+  airplane: any = null;
 
   constructor(
     public dialogRef: MatDialogRef<TravelDetailComponent>,
     @Inject(MAT_DIALOG_DATA) public data: TravelDetailData,
     private flightsService: FlightsService,
-    private authService: AuthService
+    private authService: AuthService,
+    private dialog: MatDialog
   ) {}
 
   ngOnInit(): void {
@@ -75,7 +79,14 @@ export class TravelDetailComponent implements OnInit {
 
   selectFlight(flight: any) {
     this.selectedFlight = flight;
+
+    if (flight.airplane_id) {
+      this.loadAirplaneData(flight.airplane_id);
+    } else {
+      this.airplane = null;
+    }
   }
+
 
   checkIfSaved(): void {
     if (!this.user) return;
@@ -128,5 +139,56 @@ export class TravelDetailComponent implements OnInit {
     });
   }
 
+  loadAirplaneData(airplaneId: number) {
+    if (!airplaneId) return;
 
+    this.flightsService.getAirplaneById(airplaneId).subscribe({
+      next: (res) => {
+        if (res.success) {
+          console.log(res)
+          console.log("X12345X")
+          this.airplane = res.airplane;
+        } else {
+          console.error("❌ Error fetching airplane data.");
+        }
+      },
+      error: (err) => console.error("❌ Error fetching airplane:", err)
+    });
+  }
+
+
+  openCategoryDialog(flight: any, event: MouseEvent): void {
+    const dialogRef = this.dialog.open(FlightCategoryDialogComponent, {
+      width: '296px',
+      data: { flight: flight, userId: this.user?.id },
+      hasBackdrop: false,  // ❌ Uklanjamo tamnu pozadinu
+      panelClass: 'flight-category-popup'  // ✨ Dodajemo klasu za poziciju
+    });
+
+    // Close dialog when mouse exits dialog
+    const target = event.target as HTMLElement;
+    let isInsideDialog = false;
+
+    dialogRef.afterOpened().subscribe(() => {
+      const dialogElement = document.querySelector('.flight-category-popup') as HTMLElement;
+
+      dialogElement?.addEventListener('mouseenter', () => (isInsideDialog = true));
+      dialogElement?.addEventListener('mouseleave', () => {
+        isInsideDialog = false;
+        setTimeout(() => {
+          if (!isInsideDialog) {
+            dialogRef.close();
+          }
+        }, 200);
+      });
+
+      target.addEventListener('mouseleave', () => {
+        setTimeout(() => {
+          if (!isInsideDialog) {
+            dialogRef.close();
+          }
+        }, 200);
+      });
+    });
+  }
 }

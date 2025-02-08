@@ -81,6 +81,12 @@
       <span class="label">Flight Number:</span>
       <span class="value">{{ selectedFlight.flight_number }}</span>
     </div>
+
+    <div class="detail-row" *ngIf="airplane">
+      <span class="label">Aircraft Model:</span>
+      <span class="value">{{ airplane.model }}</span>
+    </div>
+
     <div class="detail-row">
       <span class="label">Departure:</span>
       <span class="value">
@@ -101,7 +107,13 @@
     </div>
     <div class="detail-row">
       <span class="label">Price:</span>
-      <span class="value">{{ selectedFlight.price | currency: "EUR" }}</span>
+      <div class="price-info-container">
+        <span class="flight-price">
+          {{ selectedFlight.price | currency: "EUR" }}
+        </span>
+
+        <mat-icon (mouseenter)="openCategoryDialog(selectedFlight, $event)">info</mat-icon>
+      </div>
     </div>
     <div class="detail-row">
       <span class="label">Aircompany:</span>

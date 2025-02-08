@@ -1,0 +1,48 @@
+<div class="flight-category-dialog">
+  <div *ngFor="let category of flightCategories" class="category-section">
+    <p class="category-title">
+      <strong>{{ category.category }}</strong>
+      <span class="category-price">
+        {{ calculatePrice(data.flight.price, category.price_increase_percentage) | currency: "EUR" }}
+      </span>
+    </p>
+
+    <ul class="category-features">
+      <li *ngIf="category.reserved_seat">Reserved Seat</li>
+      <li *ngIf="category.priority_boarding">Priority Boarding</li>
+      <li *ngIf="category.change_flight_with_no_fees">Switch to an earlier flight without additional fees</li>
+    </ul>
+
+    <p class="allowed-baggage"><strong>Allowed Baggage:</strong></p>
+
+    <!-- Personal Bag -->
+    <div class="baggage-group">
+      <p class="baggage-title">✔ 1x Personal Bag (40x25x20cm)</p>
+      <ul class="baggage-items">
+        <li *ngFor="let bag of getAllowedBaggage(category, 'personalBag')" class="baggage-item">
+          {{ bag.color }} {{ bag.brand ? bag.brand + ' - ' : '' }} ({{ bag.width }}x{{ bag.height }}x{{ bag.depth }} cm)
+        </li>
+      </ul>
+    </div>
+
+    <!-- Cabin Bag -->
+    <div *ngIf="category.cabin_baggage" class="baggage-group">
+      <p class="baggage-title">✔ 1x Cabin Bag (55x40x20cm, max 10kg)</p>
+      <ul class="baggage-items">
+        <li *ngFor="let bag of getAllowedBaggage(category, 'cabinBag')" class="baggage-item">
+          {{ bag.color }} {{ bag.brand ? bag.brand + ' - ' : '' }} ({{ bag.width }}x{{ bag.height }}x{{ bag.depth }} cm)
+        </li>
+      </ul>
+    </div>
+
+    <!-- Checked Baggage -->
+    <div *ngIf="category.check_in_baggage" class="baggage-group">
+      <p class="baggage-title">✔ 1x Checked Baggage (119x119x81cm, max 20kg)</p>
+      <ul class="baggage-items">
+        <li *ngFor="let bag of getAllowedBaggage(category, 'checkInBag')" class="baggage-item">
+          {{ bag.color }} {{ bag.brand ? bag.brand + ' - ' : '' }} ({{ bag.width }}x{{ bag.height }}x{{ bag.depth }} cm)
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,70 @@
+.flight-category-dialog {
+  width: 280px;
+  font-size: 11px;
+  background: #dfe1e4;
+  border-radius: 6px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+  padding: 8px;
+  overflow: hidden;
+  white-space: normal;
+}
+
+.allowed-baggage {
+  font-size: 9px;
+  margin-bottom: 2px;
+  font-style: oblique;
+}
+
+.category-section {
+  margin-bottom: 2px;
+  padding: 1px 4px;
+  border-radius: 5px;
+  border: 1px solid #073590;
+  background: #ffffff;
+}
+
+.category-title {
+  font-size: 11px;
+  color: #073590;
+  font-weight: bold;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.category-price {
+  font-size: 11px;
+  font-weight: bold;
+  color: #d9534f;
+}
+
+.category-features {
+  font-size: 10px;
+  color: #333;
+  padding-left: 10px;
+}
+
+.baggage-group {
+  background: #e2e6f0;
+  padding: 1px 2px;
+  border-radius: 4px;
+  margin-top: 1px;
+}
+
+.baggage-title {
+  font-size: 9px;
+  font-weight: bold;
+  color: #073590;
+  margin-bottom: 2px;
+}
+
+.baggage-items {
+  padding-left: 10px;
+  margin-top: 2px;
+}
+
+.baggage-item {
+  font-size: 10px;
+  color: #333;
+  margin: 1px 0;
+}
