@@ -1,0 +1,141 @@
+.travel-detail-container {
+  padding: 20px;
+  max-width: 700px;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #333;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.travel-detail-container h2,
+.travel-detail-container p strong {
+  color: #3369f1;
+}
+
+.flight-list-container {
+  max-height: 300px;
+  overflow-y: auto;
+  padding: 10px;
+  margin-bottom: 20px;
+  border: 1px solid #c5cae9;
+  border-radius: 8px;
+  background-color: #f7f9fc;
+}
+
+h3 {
+  color: #073590;
+}
+
+.flight-item {
+  padding: 12px 16px;
+  margin: 8px 0;
+  background-color: #f7f9fc;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+  display: flex;
+  align-items: center;
+}
+
+.flight-item:hover {
+  background-color: #e3f2fd;
+  transform: translateY(-2px);
+}
+
+.flight-item.selected {
+  background-color: #bbdefb;
+  border-color: #90caf9;
+}
+
+.flight-details {
+  margin-top: 20px;
+  padding: 16px;
+  background: linear-gradient(135deg, #ffffff, #f0f4ff);
+  border: 1px solid #c5cae9;
+  border-radius: 8px;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.flight-details h3 {
+  font-size: 1.5rem;
+  margin-bottom: 12px;
+  color: #073590;
+  font-weight: 600;
+}
+
+.detail-row {
+  display: flex;
+  margin: 6px 0;
+}
+
+.detail-row .label {
+  flex: 0 0 150px;
+  font-weight: 600;
+  color: #073590;
+}
+
+.detail-row .value {
+  flex: 1;
+  color: #333;
+}
+
+button[mat-button] {
+  display: block;
+  margin: 20px auto 0;
+  padding: 10px 20px;
+  background-color: #0d47a1;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+button[mat-button]:hover {
+  background-color: #1565c0;
+}
+
+
+
+.save-icon-container {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  cursor: pointer;
+}
+
+.heart-icon {
+  stroke: #073590;
+  fill: none;
+  transition: fill 0.5s ease-in-out, stroke 0.3s ease-in-out, transform 0.3s ease;
+}
+
+.heart-icon:hover {
+  transform: scale(1.1);
+}
+
+.heart-icon.saved {
+  stroke: none;
+  fill: url(#heartGradient);
+  animation: heart-fill 0.5s ease-in-out forwards;
+}
+
+svg {
+  display: block;
+}
+
+.heart-icon.saved::after {
+  content: "";
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(45deg, #073590, #F1C933);
+  -webkit-mask: url('/src/assets/images/heart-outline-no-bg.svg') no-repeat center;
+  mask: url('/src/assets/images/heart-outline-no-bg.svg') no-repeat center / contain;
+}
+

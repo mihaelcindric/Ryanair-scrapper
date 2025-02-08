@@ -1,0 +1,121 @@
+<div class="travel-detail-container">
+  <div class="save-icon-container" (click)="toggleSaveTravel()">
+    <svg
+      class="heart-icon"
+      [class.saved]="isSaved"
+      viewBox="0 0 24 24"
+      width="40"
+      height="40"
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      stroke="#073590"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    >
+      <defs>
+        <linearGradient id="heartGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#073590" />
+          <stop offset="100%" stop-color="#F1C933" />
+        </linearGradient>
+      </defs>
+      <path d="M20.8 4.6a5.4 5.4 0 0 0-7.6 0L12 5.9l-1.2-1.3a5.4 5.4 0 0 0-7.6 7.6l1.3 1.3L12 21l7.5-7.5 1.3-1.3a5.4 5.4 0 0 0 0-7.6z" />
+    </svg>
+  </div>
+
+  <h2>{{ data.travel.start_city }} → {{ data.travel.destination_city }}</h2>
+  <p>
+    <strong>Travel Period:</strong>
+    {{ data.travel.period_start | date:'yyyy-MM-dd' }} - {{ data.travel.period_end | date:'yyyy-MM-dd' }}
+  </p>
+  <p>
+    <strong>Total Duration:</strong>
+    {{ data.travel.total_duration | date:'HH:mm:ss' }}
+  </p>
+  <p>
+    <strong>Total Price:</strong>
+    {{ data.travel.total_price | currency: "EUR" }}
+  </p>
+  <p>
+    <strong>Flight Time:</strong>
+    {{ data.travel.total_flight_time | number }} minutes
+  </p>
+  <p>
+    <strong>Wait Time:</strong>
+    {{ data.travel.total_wait_time | number }} minutes
+  </p>
+  <p>
+    <strong>Flights:</strong>
+    {{ data.travel.number_of_flights }}
+  </p>
+  <p>
+    <strong>All Airports:</strong>
+    {{ data.travel.all_airports_in_order }}
+  </p>
+
+  <hr />
+
+  <h3>Flights in this Travel:</h3>
+  <div class="flight-list-container" *ngIf="data.travel.flights && data.travel.flights.length > 0; else noFlights">
+    <div *ngFor="let flight of data.travel.flights" class="flight-item"
+         (click)="selectFlight(flight)" [class.selected]="selectedFlight === flight">
+      <div class="flight-summary">
+        <span class="flight-number">Flight: {{ flight.flight_number }}</span> ||
+        <span class="flight-route">
+          {{ flight.from_airport }}
+          <span *ngIf="flight.departure_city"> ({{ flight.departure_city }})</span>
+          → {{ flight.to_airport }}
+          <span *ngIf="flight.arrival_city"> ({{ flight.arrival_city }})</span>
+        </span> ||
+        <span class="flight-time">{{ flight.departure_time | date:'shortTime' }} → {{ flight.arrival_time | date:'shortTime' }}</span>
+      </div>
+    </div>
+  </div>
+  <ng-template #noFlights>
+    <p>No flights available for this travel.</p>
+  </ng-template>
+
+  <div *ngIf="selectedFlight" class="flight-details">
+    <h3>Flight Details:</h3>
+    <div class="detail-row">
+      <span class="label">Flight Number:</span>
+      <span class="value">{{ selectedFlight.flight_number }}</span>
+    </div>
+    <div class="detail-row">
+      <span class="label">Departure:</span>
+      <span class="value">
+        {{ selectedFlight.departure_time | date:'medium' }}
+        <span *ngIf="selectedFlight.departure_city"> ({{ selectedFlight.departure_city }})</span>
+      </span>
+    </div>
+    <div class="detail-row">
+      <span class="label">Arrival:</span>
+      <span class="value">
+        {{ selectedFlight.arrival_time | date:'medium' }}
+        <span *ngIf="selectedFlight.arrival_city"> ({{ selectedFlight.arrival_city }})</span>
+      </span>
+    </div>
+    <div class="detail-row">
+      <span class="label">Duration:</span>
+      <span class="value">{{ selectedFlight.duration }}</span>
+    </div>
+    <div class="detail-row">
+      <span class="label">Price:</span>
+      <span class="value">{{ selectedFlight.price | currency: "EUR" }}</span>
+    </div>
+    <div class="detail-row">
+      <span class="label">Aircompany:</span>
+      <span class="value">{{ selectedFlight.aircompany }}</span>
+    </div>
+    <div class="detail-row">
+      <span class="label">Sold Out:</span>
+      <span class="value">{{ selectedFlight.sold_out ? 'Yes' : 'No' }}</span>
+    </div>
+    <div class="detail-row">
+      <span class="label">Unavailable:</span>
+      <span class="value">{{ selectedFlight.unavailable ? 'Yes' : 'No' }}</span>
+    </div>
+  </div>
+
+  <button mat-button (click)="onClose()">Close</button>
+</div>
