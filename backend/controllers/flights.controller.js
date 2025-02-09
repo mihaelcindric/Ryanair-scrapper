@@ -3,16 +3,8 @@ const sql = require('mssql');
 
 const getAirportCodes = async (req, res) => {
   try {
-    const { pool, shouldSetAppRole } = await connectToDatabase();
-
-    let result;
-    if (shouldSetAppRole) {
-      result = await pool.request().query("EXEC sp_setapprole 'APP_Uloga', 'App12345678', none;SELECT code FROM [Sifrarnik].Airport");
-    }
-    else {
-      result = await pool.request().query("SELECT code FROM [Sifrarnik].Airport");
-    }
-
+    const pool = await connectToDatabase();
+    const result = await pool.request().query('SELECT code FROM [Sifrarnik].Airport');
     res.json(result.recordset);
   } catch (err) {
     console.error('Error fetching airport codes:', err);
@@ -22,16 +14,8 @@ const getAirportCodes = async (req, res) => {
 
 const getLocations = async (req, res) => {
   try {
-    const { pool, shouldSetAppRole } = await connectToDatabase();
-
-    let result;
-    if (shouldSetAppRole) {
-      result = await pool.request().query("EXEC sp_setapprole 'APP_Uloga', 'App12345678', none;SELECT name, country FROM [Sifrarnik].Location");
-    }
-    else {
-      result = await pool.request().query("SELECT name, country FROM [Sifrarnik].Location");
-    }
-
+    const pool = await connectToDatabase();
+    const result = await pool.request().query('SELECT name, country FROM [Sifrarnik].Location');
     res.json(result.recordset);
   } catch (err) {
     console.error('Error fetching locations:', err);
@@ -49,32 +33,18 @@ const addFlight = async (req, res) => {
   }
 
   try {
-    const { pool, shouldSetAppRole } = await connectToDatabase();
+    const pool = await connectToDatabase();
 
     // Insert Airplane (default)
-    let airplaneResult;
-    if (shouldSetAppRole) {
-      airplaneResult = await pool.request()
-        .input('model', 'Boeing 737')
-        .input('registration', null)
-        .input('capacity', 150)
-        .query(`EXEC sp_setapprole 'APP_Uloga', 'App12345678', none;
+    const airplaneResult = await pool.request()
+      .input('model', 'Boeing 737')
+      .input('registration', null)
+      .input('capacity', 150)
+      .query(`
         INSERT INTO [IO].Airplane (model, registration, capacity)
         OUTPUT INSERTED.id
         VALUES (@model, @registration, @capacity);
       `);
-    }
-    else {
-      airplaneResult = await pool.request()
-        .input('model', 'Boeing 737')
-        .input('registration', null)
-        .input('capacity', 150)
-        .query(`
-        INSERT INTO [IO].Airplane (model, registration, capacity)
-        OUTPUT INSERTED.id
-        VALUES (@model, @registration, @capacity);
-      `);
-    }
 
     if (airplaneResult.recordset.length === 0) {
       return res.status(500).json({ error: 'Could not insert airplane.' });
@@ -99,26 +69,14 @@ const addFlight = async (req, res) => {
       .input('from_code', from)
       .input('to_code', to);
 
-    let result;
-    if (shouldSetAppRole) {
-      result = await request.execute("EXEC sp_setapprole 'APP_Uloga', 'App12345678', none;" + 'sp_AddOrUpdateFlight');
-    }
-    else {
-      result = await request.execute('sp_AddOrUpdateFlight');
-    }
+    const result = await request.execute('sp_AddOrUpdateFlight');
 
     if (result.recordset.length > 0) {
       const flightId = result.recordset[0].id;
       console.log(`✅ Flight upserted with ID: ${flightId}`);
 
       // Fetch all flight categories
-      let categoryResult;
-      if (shouldSetAppRole) {
-        categoryResult = await pool.request().query(`EXEC sp_setapprole 'APP_Uloga', 'App12345678', none;SELECT id FROM [Sifrarnik].Flight_category`);
-      }
-      else {
-        categoryResult = await pool.request().query(`SELECT id FROM [Sifrarnik].Flight_category`);
-      }
+      const categoryResult = await pool.request().query(`SELECT id FROM [Sifrarnik].Flight_category`);
       const categories = categoryResult.recordset.map(row => row.id);
 
       // Connect the flight with all categories (default)
@@ -132,13 +90,7 @@ const addFlight = async (req, res) => {
         });
 
         const insertQuery = `INSERT INTO [IO].Flight_Flight_category (flight_id, category_id) VALUES ${values}`;
-
-        if (shouldSetAppRole) {
-          await insertRequest.query("EXEC sp_setapprole 'APP_Uloga', 'App12345678', none;" + insertQuery);
-        }
-        else {
-          await insertRequest.query(insertQuery);
-        }
+        await insertRequest.query(insertQuery);
 
         console.log(`✅ Inserted ${categories.length} categories for flight ID: ${flightId}`);
       }
@@ -171,28 +123,16 @@ const getFilteredFlights = async (req, res) => {
   }
 
   try {
-    const { pool, shouldSetAppRole } = await connectToDatabase();
+    const pool = await connectToDatabase();
     console.log("✅ Connected to Database");
 
-    let result;
-    if (shouldSetAppRole) {
-      result = await pool.request()
-        .input('departure_time', departure_time)
-        .input('arrival_time', arrival_time)
-        .query(`EXEC sp_setapprole 'APP_Uloga', 'App12345678', none;
+    const result = await pool.request()
+      .input('departure_time', departure_time)
+      .input('arrival_time', arrival_time)
+      .query(`
         SELECT * FROM [IO].Flights
         WHERE departure_time >= @departure_time AND arrival_time <= @arrival_time
       `);
-    }
-    else {
-      result = await pool.request()
-        .input('departure_time', departure_time)
-        .input('arrival_time', arrival_time)
-        .query(`
-        SELECT * FROM [IO].Flights
-        WHERE departure_time >= @departure_time AND arrival_time <= @arrival_time
-      `);
-    }
 
     console.log("🎯 Flights Fetched:", result.recordset.length);
     res.json(result.recordset);
@@ -214,24 +154,16 @@ const getAirportsForLocation = async (req, res) => {
   }
 
   try {
-    const { pool, shouldSetAppRole } = await connectToDatabase();
+    const pool = await connectToDatabase();
     console.log("✅ Connected to Database");
 
     const request = pool.request();
     request.input("location", location);
 
     console.log("🔎 Searching for location ID...");
-    let locationResult;
-    if (shouldSetAppRole) {
-      locationResult = await request.query(`
-    EXEC sp_setapprole 'APP_Uloga', 'App12345678', none; SELECT id FROM [Sifrarnik].Location WHERE name = @location OR country = @location
+    const locationResult = await request.query(`
+      SELECT id FROM [Sifrarnik].Location WHERE name = @location OR country = @location
     `);
-    }
-    else {
-      locationResult = await request.query(`
-        SELECT id FROM [Sifrarnik].Location WHERE name = @location OR country = @location
-    `);
-    }
 
     if (locationResult.recordset.length === 0) {
       console.log("⚠️ WARNING: No matching location found.");
@@ -242,15 +174,8 @@ const getAirportsForLocation = async (req, res) => {
     console.log("✅ Found Location IDs:", locationIds);
 
     console.log("🔎 Fetching airports for location...");
-    let airportsResult;
-    if (shouldSetAppRole) {
-      airportsResult = await pool.request()
-        .query(`EXEC sp_setapprole 'APP_Uloga', 'App12345678', none;SELECT code FROM [Sifrarnik].Airport WHERE location_id IN (${locationIds.join(",")})`);
-    }
-    else {
-      airportsResult = await pool.request()
-        .query(`SELECT code FROM [Sifrarnik].Airport WHERE location_id IN (${locationIds.join(",")})`);
-    }
+    const airportsResult = await pool.request()
+      .query(`SELECT code FROM [Sifrarnik].Airport WHERE location_id IN (${locationIds.join(",")})`);
 
     if (airportsResult.recordset.length === 0) {
       console.log("⚠️ WARNING: No airports found for this location.");
@@ -273,29 +198,17 @@ const getConnectedAirports = async (req, res) => {
   }
 
   try {
-    const { pool, shouldSetAppRole } = await connectToDatabase();
+    const pool = await connectToDatabase();
     const request = pool.request();
     request.input("airportCode", airportCode);
 
-    let result;
-    if (shouldSetAppRole) {
-      result = await request.query(`EXEC sp_setapprole 'APP_Uloga', 'App12345678', none;
+    const result = await request.query(`
             SELECT DISTINCT A2.code AS connected_airport_code
             FROM [IO].Airport_Airport AA
             JOIN [Sifrarnik].Airport A1 ON AA.origin_id = A1.id
             JOIN [Sifrarnik].Airport A2 ON AA.destination_id = A2.id
             WHERE A1.code = @airportCode
         `);
-    }
-    else {
-      result = await request.query(`
-            SELECT DISTINCT A2.code AS connected_airport_code
-            FROM [IO].Airport_Airport AA
-            JOIN [Sifrarnik].Airport A1 ON AA.origin_id = A1.id
-            JOIN [Sifrarnik].Airport A2 ON AA.destination_id = A2.id
-            WHERE A1.code = @airportCode
-        `);
-    }
 
     if (result.recordset.length === 0) {
       return res.status(404).json({ message: "No connected airports found." });
@@ -321,7 +234,7 @@ const getStoredFlights = async (req, res) => {
   }
 
   try {
-    const { pool, shouldSetAppRole } = await connectToDatabase();
+    const pool = await connectToDatabase();
     console.log("Database Connection: SUCCESS");
 
     const request = pool.request();
@@ -368,14 +281,7 @@ const getStoredFlights = async (req, res) => {
     request.input('periodEnd', periodEnd);
     console.log("SQL Inputs set: periodStart =", periodStart, ", periodEnd =", periodEnd);
 
-    let result;
-    if (shouldSetAppRole) {
-      result = await request.query("EXEC sp_setapprole 'APP_Uloga', 'App12345678', none;" + query);
-    }
-    else {
-      result = await request.query(query);
-    }
-
+    const result = await request.query(query);
     console.log("SQL Query executed successfully.");
     console.log("Number of records fetched:", result.recordset.length);
     console.log("Recordset:", result.recordset);
@@ -399,20 +305,10 @@ const getLocationDetails = async (req, res) => {
     return res.status(400).json({ error: "Selection parameter is required." });
   }
   try {
-    const { pool, shouldSetAppRole } = await connectToDatabase();
-
-    let result;
-    if (shouldSetAppRole) {
-      result = await pool.request()
-        .input("selection", selection)
-        .query(`EXEC sp_setapprole 'APP_Uloga', 'App12345678', none;SELECT TOP 1 name, country FROM [Sifrarnik].Location WHERE name = @selection OR country = @selection`);
-    }
-    else {
-      result = await pool.request()
-        .input("selection", selection)
-        .query(`SELECT TOP 1 name, country FROM [Sifrarnik].Location WHERE name = @selection OR country = @selection`);
-    }
-
+    const pool = await connectToDatabase();
+    const result = await pool.request()
+      .input("selection", selection)
+      .query(`SELECT TOP 1 name, country FROM [Sifrarnik].Location WHERE name = @selection OR country = @selection`);
     if (result.recordset.length === 0) {
       return res.status(404).json({ error: "Location not found." });
     }
@@ -429,20 +325,10 @@ const getLocationByAirport = async (req, res) => {
     return res.status(400).json({ error: "Airport code is required." });
   }
   try {
-    const { pool, shouldSetAppRole } = await connectToDatabase();
-
-    let result;
-    if (shouldSetAppRole) {
-      result = await pool.request()
-        .input("code", code)
-        .query(`EXEC sp_setapprole 'APP_Uloga', 'App12345678', none;SELECT L.name, L.country FROM [Sifrarnik].Airport A JOIN [Sifrarnik].Location L ON A.location_id = L.id WHERE A.code = @code`);
-    }
-    else {
-      result = await pool.request()
-        .input("code", code)
-        .query(`SELECT L.name, L.country FROM [Sifrarnik].Airport A JOIN [Sifrarnik].Location L ON A.location_id = L.id WHERE A.code = @code`);
-    }
-
+    const pool = await connectToDatabase();
+    const result = await pool.request()
+      .input("code", code)
+      .query(`SELECT L.name, L.country FROM [Sifrarnik].Airport A JOIN [Sifrarnik].Location L ON A.location_id = L.id WHERE A.code = @code`);
     if (result.recordset.length === 0) {
       return res.status(404).json({ error: "Location for the given airport code not found." });
     }
@@ -480,7 +366,7 @@ const addTravel = async (req, res) => {
   }
 
   try {
-    const { pool, shouldSetAppRole } = await connectToDatabase();
+    const pool = await connectToDatabase();
     const request = pool.request();
 
     request
@@ -506,14 +392,7 @@ const addTravel = async (req, res) => {
     console.log("Executing INSERT query for Travel:");
     console.log(insertQuery);
 
-    let result;
-    if (shouldSetAppRole) {
-      result = await request.query("EXEC sp_setapprole 'APP_Uloga', 'App12345678', none;" + insertQuery);
-    }
-    else {
-      result = await request.query(insertQuery);
-    }
-
+    const result = await request.query(insertQuery);
     console.log("Insert query result:", JSON.stringify(result, null, 2));
     if (result.recordset.length > 0) {
       const travelId = result.recordset[0].travelId;
@@ -540,7 +419,7 @@ const addTravelFlight = async (req, res) => {
     return res.status(400).json({ error: "Missing travel_id or flight_id." });
   }
   try {
-    const { pool, shouldSetAppRole } = await connectToDatabase();
+    const pool = await connectToDatabase();
     const request = pool.request();
     request.input('travel_id', travel_id)
       .input('flight_id', flight_id);
@@ -553,14 +432,7 @@ const addTravelFlight = async (req, res) => {
     console.log("Executing INSERT query for Travel_Flight:");
     console.log(insertQuery);
 
-    let result;
-    if (shouldSetAppRole) {
-      result = await request.query("EXEC sp_setapprole 'APP_Uloga', 'App12345678', none;" + insertQuery);
-    }
-    else {
-      result = await request.query(insertQuery);
-    }
-
+    const result = await request.query(insertQuery);
     console.log("Insert query result:", JSON.stringify(result, null, 2));
     if (result.recordset.length > 0) {
       const joinId = result.recordset[0].joinId;
@@ -590,7 +462,7 @@ const getStoredTravels = async (req, res) => {
   }
 
   try {
-    const { pool, shouldSetAppRole } = await connectToDatabase();
+    const pool = await connectToDatabase();
     console.log("Database Connection: SUCCESS");
 
     const request = pool.request();
@@ -601,13 +473,7 @@ const getStoredTravels = async (req, res) => {
       request.input('toCity', sql.NVarChar, to);
     }
 
-    let result;
-    if (shouldSetAppRole) {
-      result = await request.execute("EXEC sp_setapprole 'APP_Uloga', 'App12345678', none;" + 'sp_GetStoredTravels');
-    }
-    else {
-      result = await request.execute('sp_GetStoredTravels');
-    }
+    const result = await request.execute('sp_GetStoredTravels');
 
     console.log("SQL Query executed successfully. Records fetched:", result.recordset.length);
 
@@ -631,7 +497,7 @@ const getTravelFlights = async (req, res) => {
   }
 
   try {
-    const { pool, shouldSetAppRole } = await connectToDatabase();
+    const pool = await connectToDatabase();
     console.log("Database Connection: SUCCESS");
 
     const request = pool.request();
@@ -664,13 +530,7 @@ const getTravelFlights = async (req, res) => {
     console.log("Executing SQL Query for getTravelFlights:");
     console.log(query);
 
-    let result;
-    if (shouldSetAppRole) {
-      result = await request.query("EXEC sp_setapprole 'APP_Uloga', 'App12345678', none;" + query);
-    }
-    else {
-      result = await request.query(query);
-    }
+    const result = await request.query(query);
     console.log("SQL Query executed successfully. Records fetched:", result.recordset.length);
     res.status(200).json(result.recordset);
   } catch (error) {
@@ -688,42 +548,23 @@ const saveTravel = async (req, res) => {
       return res.status(400).json({ success: false, message: "User ID and Travel ID are required." });
     }
 
-    const { pool, shouldSetAppRole } = await connectToDatabase();
+    const pool = await connectToDatabase();
 
-    let checkExisting;
-    if (shouldSetAppRole) {
-      checkExisting = await pool
-        .request()
-        .input("userId", user_id)
-        .input("travelId", travel_id)
-        .query("EXEC sp_setapprole 'APP_Uloga', 'App12345678', none;SELECT * FROM [IO].[User_Travel] WHERE user_id = @userId AND travel_id = @travelId");
-    }
-    else {
-      checkExisting = await pool
-        .request()
-        .input("userId", user_id)
-        .input("travelId", travel_id)
-        .query("SELECT * FROM [IO].[User_Travel] WHERE user_id = @userId AND travel_id = @travelId");
-    }
+    const checkExisting = await pool
+      .request()
+      .input("userId", user_id)
+      .input("travelId", travel_id)
+      .query("SELECT * FROM [IO].[User_Travel] WHERE user_id = @userId AND travel_id = @travelId");
 
     if (checkExisting.recordset.length > 0) {
       return res.status(409).json({ success: false, message: "Travel is already saved." });
     }
 
-    if (shouldSetAppRole) {
-      await pool
-        .request()
-        .input("userId", user_id)
-        .input("travelId", travel_id)
-        .query("EXEC sp_setapprole 'APP_Uloga', 'App12345678', none;INSERT INTO [IO].[User_Travel] (user_id, travel_id) VALUES (@userId, @travelId)");
-    }
-    else {
-      await pool
-        .request()
-        .input("userId", user_id)
-        .input("travelId", travel_id)
-        .query("INSERT INTO [IO].[User_Travel] (user_id, travel_id) VALUES (@userId, @travelId)");
-    }
+    await pool
+      .request()
+      .input("userId", user_id)
+      .input("travelId", travel_id)
+      .query("INSERT INTO [IO].[User_Travel] (user_id, travel_id) VALUES (@userId, @travelId)");
 
     return res.json({ success: true, message: "Travel saved successfully!" });
   } catch (err) {
@@ -741,31 +582,17 @@ const getSavedTravels = async (req, res) => {
       return res.status(400).json({ success: false, message: "User ID is required." });
     }
 
-    const { pool, shouldSetAppRole } = await connectToDatabase();
+    const pool = await connectToDatabase();
 
-    let result;
-    if (shouldSetAppRole) {
-      result = await pool
-        .request()
-        .input("userId", user_id)
-        .query(`EXEC sp_setapprole 'APP_Uloga', 'App12345678', none;
+    const result = await pool
+      .request()
+      .input("userId", user_id)
+      .query(`
         SELECT t.*
         FROM [IO].[Travel] t
         JOIN [IO].[User_Travel] ut ON t.id = ut.travel_id
         WHERE ut.user_id = @userId
       `);
-    }
-    else {
-      result = await pool
-        .request()
-        .input("userId", user_id)
-        .query(`
-        SELECT t.*
-        FROM [IO].[Travel] t
-        JOIN [IO].[User_Travel] ut ON t.id = ut.travel_id
-        WHERE ut.user_id = @userId
-      `);
-    }
 
     return res.json({ success: true, travels: result.recordset });
   } catch (err) {
@@ -782,27 +609,15 @@ const removeSavedTravel = async (req, res) => {
       return res.status(400).json({ success: false, message: "User ID and Travel ID are required." });
     }
 
-    const { pool, shouldSetAppRole } = await connectToDatabase();
+    const pool = await connectToDatabase();
 
-    let deleteResult;
-    if (shouldSetAppRole) {
-      deleteResult = await pool
-        .request()
-        .input("userId", user_id)
-        .input("travelId", travel_id)
-        .query(`EXEC sp_setapprole 'APP_Uloga', 'App12345678', none;
+    const deleteResult = await pool
+      .request()
+      .input("userId", user_id)
+      .input("travelId", travel_id)
+      .query(`
         DELETE FROM [IO].[User_Travel] WHERE user_id = @userId AND travel_id = @travelId
       `);
-    }
-    else {
-      deleteResult = await pool
-        .request()
-        .input("userId", user_id)
-        .input("travelId", travel_id)
-        .query(`
-        DELETE FROM [IO].[User_Travel] WHERE user_id = @userId AND travel_id = @travelId
-      `);
-    }
 
     if (deleteResult.rowsAffected[0] === 0) {
       return res.status(404).json({ success: false, message: "Saved travel not found." });
@@ -823,27 +638,15 @@ const getSavedTravel = async (req, res) => {
       return res.status(400).json({ success: false, message: "User ID and Travel ID are required." });
     }
 
-    const { pool, shouldSetAppRole } = await connectToDatabase();
+    const pool = await connectToDatabase();
 
-    let result;
-    if (shouldSetAppRole) {
-      result = await pool
-        .request()
-        .input("userId", user_id)
-        .input("travelId", travel_id)
-        .query(`EXEC sp_setapprole 'APP_Uloga', 'App12345678', none;
+    const result = await pool
+      .request()
+      .input("userId", user_id)
+      .input("travelId", travel_id)
+      .query(`
         SELECT 1 FROM [IO].[User_Travel] WHERE user_id = @userId AND travel_id = @travelId
       `);
-    }
-    else {
-      result = await pool
-        .request()
-        .input("userId", user_id)
-        .input("travelId", travel_id)
-        .query(`
-        SELECT 1 FROM [IO].[User_Travel] WHERE user_id = @userId AND travel_id = @travelId
-      `);
-    }
 
     const isSaved = result.recordset.length > 0;
 
@@ -862,19 +665,10 @@ const getBaggageByUser = async (req, res) => {
   }
 
   try {
-    const { pool, shouldSetAppRole } = await connectToDatabase();
-
-    let result;
-    if (shouldSetAppRole) {
-      result = await pool.request()
-        .input("userId", userId)
-        .query("EXEC sp_setapprole 'APP_Uloga', 'App12345678', none;SELECT * FROM [IO].[Baggage] WHERE user_id = @userId");
-    }
-    else {
-      result = await pool.request()
-        .input("userId", userId)
-        .query("SELECT * FROM [IO].[Baggage] WHERE user_id = @userId");
-    }
+    const pool = await connectToDatabase();
+    const result = await pool.request()
+      .input("userId", userId)
+      .query("SELECT * FROM [IO].Baggage WHERE user_id = @userId");
 
     res.json({ success: true, baggage: result.recordset });
   } catch (err) {
@@ -891,38 +685,20 @@ const addBaggage = async (req, res) => {
   }
 
   try {
-    const { pool, shouldSetAppRole } = await connectToDatabase();
-
-    if (shouldSetAppRole) {
-      await pool.request()
-        .input("brand", brand || null)
-        .input("color", color)
-        .input("width", width)
-        .input("height", height)
-        .input("depth", depth)
-        .input("wheels_count", wheels_count || null)
-        .input("has_tracker", has_tracker || false)
-        .input("user_id", user_id)
-        .query(`EXEC sp_setapprole 'APP_Uloga', 'App12345678', none;
-        INSERT INTO [IO].[Baggage] (brand, color, width, height, depth, wheels_count, has_tracker, user_id)
+    const pool = await connectToDatabase();
+    await pool.request()
+      .input("brand", brand || null)
+      .input("color", color)
+      .input("width", width)
+      .input("height", height)
+      .input("depth", depth)
+      .input("wheels_count", wheels_count || null)
+      .input("has_tracker", has_tracker || false)
+      .input("user_id", user_id)
+      .query(`
+        INSERT INTO [IO].Baggage (brand, color, width, height, depth, wheels_count, has_tracker, user_id)
         VALUES (@brand, @color, @width, @height, @depth, @wheels_count, @has_tracker, @user_id)
       `);
-    }
-    else {
-      await pool.request()
-        .input("brand", brand || null)
-        .input("color", color)
-        .input("width", width)
-        .input("height", height)
-        .input("depth", depth)
-        .input("wheels_count", wheels_count || null)
-        .input("has_tracker", has_tracker || false)
-        .input("user_id", user_id)
-        .query(`
-        INSERT INTO [IO].[Baggage] (brand, color, width, height, depth, wheels_count, has_tracker, user_id)
-        VALUES (@brand, @color, @width, @height, @depth, @wheels_count, @has_tracker, @user_id)
-      `);
-    }
 
     res.json({ success: true, message: "Baggage added successfully." });
   } catch (err) {
@@ -939,44 +715,23 @@ const updateBaggage = async (req, res) => {
   }
 
   try {
-    const { pool, shouldSetAppRole } = await connectToDatabase();
-
-    if (shouldSetAppRole) {
-      await pool.request()
-        .input("id", id)
-        .input("brand", brand || null)
-        .input("color", color)
-        .input("width", width)
-        .input("height", height)
-        .input("depth", depth)
-        .input("wheels_count", wheels_count || null)
-        .input("has_tracker", has_tracker || false)
-        .input("user_id", user_id)
-        .query(`EXEC sp_setapprole 'APP_Uloga', 'App12345678', none;
-        UPDATE [IO].[Baggage]
+    const pool = await connectToDatabase();
+    await pool.request()
+      .input("id", id)
+      .input("brand", brand || null)
+      .input("color", color)
+      .input("width", width)
+      .input("height", height)
+      .input("depth", depth)
+      .input("wheels_count", wheels_count || null)
+      .input("has_tracker", has_tracker || false)
+      .input("user_id", user_id)
+      .query(`
+        UPDATE [IO].Baggage
         SET brand = @brand, color = @color, width = @width, height = @height,
             depth = @depth, wheels_count = @wheels_count, has_tracker = @has_tracker
         WHERE id = @id AND user_id = @user_id
       `);
-    }
-    else {
-      await pool.request()
-        .input("id", id)
-        .input("brand", brand || null)
-        .input("color", color)
-        .input("width", width)
-        .input("height", height)
-        .input("depth", depth)
-        .input("wheels_count", wheels_count || null)
-        .input("has_tracker", has_tracker || false)
-        .input("user_id", user_id)
-        .query(`
-        UPDATE [IO].[Baggage]
-        SET brand = @brand, color = @color, width = @width, height = @height,
-            depth = @depth, wheels_count = @wheels_count, has_tracker = @has_tracker
-        WHERE id = @id AND user_id = @user_id
-      `);
-    }
 
     res.json({ success: true, message: "Baggage updated successfully." });
   } catch (err) {
@@ -993,18 +748,10 @@ const deleteBaggage = async (req, res) => {
   }
 
   try {
-    const { pool, shouldSetAppRole } = await connectToDatabase();
-
-    if (shouldSetAppRole) {
-      await pool.request()
-        .input("baggageId", baggageId)
-        .query("EXEC sp_setapprole 'APP_Uloga', 'App12345678', none;DELETE FROM [IO].Baggage WHERE id = @baggageId");
-    }
-    else {
-      await pool.request()
-        .input("baggageId", baggageId)
-        .query("DELETE FROM [IO].Baggage WHERE id = @baggageId");
-    }
+    const pool = await connectToDatabase();
+    await pool.request()
+      .input("baggageId", baggageId)
+      .query("DELETE FROM [IO].Baggage WHERE id = @baggageId");
 
     res.json({ success: true, message: "Baggage deleted successfully." });
   } catch (err) {
@@ -1021,13 +768,10 @@ const getFlightCategories = async (req, res) => {
   }
 
   try {
-    const { pool, shouldSetAppRole } = await connectToDatabase();
-
-    let result;
-    if (shouldSetAppRole) {
-      result = await pool.request()
-        .input('flightId', flightId)
-        .query(`EXEC sp_setapprole 'APP_Uloga', 'App12345678', none;
+    const pool = await connectToDatabase();
+    const result = await pool.request()
+      .input('flightId', flightId)
+      .query(`
         SELECT fc.id, fc.category, fc.price_increase_percentage, fc.reserved_seat,
                fc.priority_boarding, fc.cabin_baggage, fc.check_in_baggage,
                fc.change_flight_with_no_fees
@@ -1035,19 +779,6 @@ const getFlightCategories = async (req, res) => {
         JOIN [IO].Flight_Flight_category ffc ON fc.id = ffc.category_id
         WHERE ffc.flight_id = @flightId
       `);
-    }
-    else {
-      result = await pool.request()
-        .input('flightId', flightId)
-        .query(`
-        SELECT fc.id, fc.category, fc.price_increase_percentage, fc.reserved_seat,
-               fc.priority_boarding, fc.cabin_baggage, fc.check_in_baggage,
-               fc.change_flight_with_no_fees
-        FROM [Sifrarnik].Flight_category fc
-        JOIN [IO].Flight_Flight_category ffc ON fc.id = ffc.category_id
-        WHERE ffc.flight_id = @flightId
-      `);
-    }
 
     res.json({ success: true, categories: result.recordset });
   } catch (err) {
@@ -1064,19 +795,10 @@ const getAirplaneById = async (req, res) => {
   }
 
   try {
-    const { pool, shouldSetAppRole } = await connectToDatabase();
-
-    let result;
-    if (shouldSetAppRole) {
-      result = await pool.request()
-        .input('airplane_id', airplane_id)
-        .query(`EXEC sp_setapprole 'APP_Uloga', 'App12345678', none;SELECT * FROM [IO].Airplane WHERE id = @airplane_id`);
-    }
-    else {
-       result = await pool.request()
-        .input('airplane_id', airplane_id)
-        .query(`SELECT * FROM [IO].Airplane WHERE id = @airplane_id`);
-    }
+    const pool = await connectToDatabase();
+    const result = await pool.request()
+      .input('airplane_id', airplane_id)
+      .query(`SELECT * FROM [IO].Airplane WHERE id = @airplane_id`);
 
     if (result.recordset.length === 0) {
       return res.status(404).json({ error: 'Airplane not found.' });
@@ -1088,8 +810,6 @@ const getAirplaneById = async (req, res) => {
     return res.status(500).json({ error: 'Internal server error.' });
   }
 };
-
-getLocations()
 
 
 module.exports = {
