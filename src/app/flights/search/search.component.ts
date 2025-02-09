@@ -205,6 +205,7 @@ export class SearchComponent {
       }
 
       console.log("🚀 Fetching stored travels...");
+      await new Promise(resolve => setTimeout(resolve, 2000));
       this.searchResults = await this.getStoredTravels(fromLocation, toLocation, periodStart, periodEnd, returnFlight);
 
       if (returnFlight && toLocation) {
