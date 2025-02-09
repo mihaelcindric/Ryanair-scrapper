@@ -17,7 +17,8 @@ const getFullTableName = (tableName) => {
     "Airport_Flight",
     "Flight_Flight_category",
     "Travel_Flight",
-    "Travel_Location"
+    "Travel_Location",
+    "User"
   ];
 
   if (sifrarnikTables.includes(tableName)) {
@@ -34,7 +35,7 @@ const getTableSchema = async (req, res) => {
   const { tableName } = req.body;
 
   try {
-    const pool = await connectToDatabase();
+    const pool = await connectToDatabase(true);
     const result = await pool.request()
       .input('tableName', tableName)
       .query(`
@@ -59,7 +60,7 @@ const getAllRecords = async (req, res) => {
   const { tableName } = req.body;
 
   try {
-    const pool = await connectToDatabase();
+    const pool = await connectToDatabase(true);
     const fullTableName = getFullTableName(tableName);
     const result = await pool.request().query(`SELECT * FROM ${fullTableName}`);
     res.json({ success: true, data: result.recordset });
@@ -78,7 +79,7 @@ const insertRecord = async (req, res) => {
   }
 
   try {
-    const pool = await connectToDatabase();
+    const pool = await connectToDatabase(true);
     const fullTableName = getFullTableName(tableName);
     const request = pool.request();
     const columns = Object.keys(data).join(", ");
@@ -102,7 +103,7 @@ const deleteRecord = async (req, res) => {
   }
 
   try {
-    const pool = await connectToDatabase();
+    const pool = await connectToDatabase(true);
     const fullTableName = getFullTableName(tableName);
     const request = pool.request();
 
@@ -127,15 +128,15 @@ const insertAirportAirport = async (req, res) => {
   }
 
   try {
-    const pool = await connectToDatabase();
+    const pool = await connectToDatabase(true);
 
     const originResult = await pool.request()
       .input("originIata", originIata)
-      .query("SELECT id FROM Sifrarnik.Airport WHERE code = @originIata");
+      .query("SELECT id FROM [Sifrarnik].[Airport] WHERE code = @originIata");
 
     const destinationResult = await pool.request()
       .input("destinationIata", destinationIata)
-      .query("SELECT id FROM Sifrarnik.Airport WHERE code = @destinationIata");
+      .query("SELECT id FROM [Sifrarnik].[Airport] WHERE code = @destinationIata");
 
     if (originResult.recordset.length === 0 || destinationResult.recordset.length === 0) {
       return res.status(404).json({ error: "One or both airport codes not found in the database." });
@@ -148,7 +149,7 @@ const insertAirportAirport = async (req, res) => {
       .input("origin_id", originId)
       .input("destination_id", destinationId)
       .query(`
-        INSERT INTO [IO].Airport_Airport (origin_id, destination_id)
+        INSERT INTO [IO].[Airport_Airport] (origin_id, destination_id)
         VALUES (@origin_id, @destination_id)
       `);
 
@@ -167,13 +168,13 @@ const getLocationByName = async (req, res) => {
   }
 
   try {
-    const pool = await connectToDatabase();
+    const pool = await connectToDatabase(true);
     const result = await pool
       .request()
       .input("city", city)
       .input("country", country)
       .query(`
-        SELECT id FROM Sifrarnik.Location WHERE name = @city AND country = @country
+        SELECT id FROM [Sifrarnik].[Location] WHERE name = @city AND country = @country
       `);
 
     if (result.recordset.length > 0) {
@@ -195,7 +196,7 @@ const updateRecord = async (req, res) => {
   }
 
   try {
-    const pool = await connectToDatabase();
+    const pool = await connectToDatabase(true);
     const fullTableName = getFullTableName(tableName);
     const request = pool.request();
 
