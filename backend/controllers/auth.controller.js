@@ -1,5 +1,5 @@
 const connectToDatabase = require("../db/db.config");
-const bcrypt = require("bcrypt");
+const sql = require("mssql");
 
 const login = async (req, res) => {
   const { email, password } = req.body;
@@ -19,10 +19,15 @@ const login = async (req, res) => {
 
     const user = result.recordset[0];
 
-    // Compare the passwords
-    const passwordMatch = await bcrypt.compare(password, Buffer.from(user.password).toString("utf-8"));
+    const decryptionResult = await pool
+      .request()
+      .input("encryptedPassword", user.password)
+      .output("decryptedPassword", "")
+      .execute("desifriraj");
 
-    if (!passwordMatch) {
+    const decryptedPassword = decryptionResult.output.decryptedPassword;
+
+    if (password !== decryptedPassword) {
       return res
         .status(403)
         .json({ success: false, message: "Invalid email or password." });
@@ -36,7 +41,6 @@ const login = async (req, res) => {
     res.status(500).json({ success: false, message: 'Internal server error.' });
   }
 };
-
 
 const register = async (req, res) => {
   const { first_name, last_name, date_of_birth, username, email, password, profile_picture_url } = req.body;
@@ -55,8 +59,13 @@ const register = async (req, res) => {
       return res.status(400).json({ success: false, message: 'User with this email or username already exists.' });
     }
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const encryptionResult = await pool
+      .request()
+      .input("plainPassword", password)
+      .output("encryptedPassword", sql.VarBinary)
+      .execute("sifriraj");
+
+    const encryptedPassword = encryptionResult.output.encryptedPassword;
 
     await pool
       .request()
@@ -65,8 +74,8 @@ const register = async (req, res) => {
       .input('date_of_birth', date_of_birth)
       .input('username', username)
       .input('email', email)
-      .input('password', Buffer.from(hashedPassword, 'utf-8'))
-      .input('profile_picture_url', profile_picture_url || null) // Neobavezno polje
+      .input('password', encryptedPassword)
+      .input('profile_picture_url', profile_picture_url || null)
       .input('is_admin', 0)
       .query(`
         INSERT INTO [IO].[User] (first_name, last_name, date_of_birth, username, email, password, profile_picture_url)
@@ -124,8 +133,16 @@ const updateProfile = async (req, res) => {
 
     const user = userQuery.recordset[0];
 
-    const passwordMatch = await bcrypt.compare(current_password, Buffer.from(user.password).toString("utf-8"));
-    if (!passwordMatch) {
+    const decryptionResult = await pool
+      .request()
+      .input("encryptedPassword", user.password)
+      .output("decryptedPassword", "")
+      .execute("desifriraj");
+
+    const decryptedPassword = decryptionResult.output.decryptedPassword;
+
+    // Check password
+    if (current_password !== decryptedPassword) {
       return res.status(403).json({ success: false, message: 'Invalid current password.' });
     }
 
@@ -134,7 +151,6 @@ const updateProfile = async (req, res) => {
       SET first_name = @first_name, last_name = @last_name, username = @username,
           email = @email, profile_picture_url = @profile_picture_url
     `;
-
 
     const request = pool.request()
       .input('id', id)
@@ -145,9 +161,17 @@ const updateProfile = async (req, res) => {
       .input('profile_picture_url', profile_picture_url);
 
     if (new_password) {
+      // Šifriraj novu lozinku pomoću procedure
+      const encryptionResult = await pool
+        .request()
+        .input("plainPassword", new_password)
+        .output("encryptedPassword", sql.VarBinary)
+        .execute("sifriraj");
+
+      const encryptedPassword = encryptionResult.output.encryptedPassword;
+
       updateQuery += `, password = @password`;
-      const hashedPassword = await bcrypt.hash(new_password, 10);
-      request.input('password', hashedPassword);
+      request.input('password', encryptedPassword);
     }
 
     updateQuery += ` WHERE id = @id`;
