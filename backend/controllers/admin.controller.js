@@ -90,6 +90,14 @@ const insertRecord = async (req, res) => {
 
     res.json({ success: true, message: `Inserted into ${tableName}.` });
   } catch (err) {
+    const duplicateKeyMessage = "Violation of UNIQUE KEY constraint 'UQ_Location_Name_Country'";
+
+    // Ignore location errors if it is because of the constraint
+    if (tableName.toLowerCase() === "location" && err.message.includes(duplicateKeyMessage)) {
+      console.warn(`⚠️ Duplicate location detected, skipping insert:`, err.message);
+      return res.json({ success: true, message: `Location already exists, no insert needed.` });
+    }
+
     console.error(`Error inserting into ${tableName}:`, err);
     res.status(500).json({ success: false, message: `Internal server error.` });
   }
