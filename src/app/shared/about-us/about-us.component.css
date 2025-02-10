@@ -1,0 +1,38 @@
+.about-container {
+  max-width: 800px;
+  margin: 40px auto;
+  padding: 20px;
+  text-align: center;
+  background: #f8f9fa;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.title {
+  color: #064789; /* Ryanair Blue */
+  margin-bottom: 15px;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+#paragraph-divider {
+  margin-bottom: 70px;
+}
+
+.about-text {
+  font-size: 18px;
+  line-height: 1.6;
+  color: #333;
+  margin-bottom: 25px;
+}
+
+.video-container {
+  margin-top: 20px;
+}
+
+iframe {
+  width: 100%;
+  max-width: 560px;
+  height: 315px;
+  border-radius: 10px;
+}
