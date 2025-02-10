@@ -108,4 +108,19 @@ export class FlightsService {
     return this.http.post<any>(`${this.apiUrl}/flights/getAirplaneById`, { airplane_id: airplaneId });
   }
 
+  getPopularLocation(type: string):  Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/flights/statistics/popular-location`, { type });
+  }
+
+  getFlightVsWaitTime(type: string): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/flights/statistics/flight-vs-wait`, { type });
+  }
+
+  getFlightAnalysis(): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/flights/statistics/analyze-flights`);
+  }
+
+  getTopDestinationsByMonth(): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/flights/statistics/top-destinations`);
+  }
 }

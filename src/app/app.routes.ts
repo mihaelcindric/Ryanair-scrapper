@@ -9,6 +9,7 @@ import {AdminGuard} from './guards/admin.guard';
 import {ProfileComponent} from './flights/profile/profile.component';
 import {SavedTravelsComponent} from './flights/saved-travels/saved-travels.component';
 import {GuestGuard} from './guards/guest.guard';
+import {StatisticsComponent} from './flights/statistics/statistics.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/flights/search', pathMatch: 'full' },
@@ -18,6 +19,7 @@ export const routes: Routes = [
   { path: 'flights/travel-detail', component: TravelDetailComponent },
   { path: 'flights/profile', component: ProfileComponent, canActivate: [GuestGuard] },
   { path: 'flights/saved-travels', component: SavedTravelsComponent, canActivate: [GuestGuard] },
+  { path: 'flights/statistics', component: StatisticsComponent, canActivate: [GuestGuard] },
   { path: 'admin/dashboard', component: DashboardComponent, canActivate: [AdminGuard] },
   { path: '**', redirectTo: 'flights/search' }
 ];

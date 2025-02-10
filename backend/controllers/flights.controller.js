@@ -811,6 +811,91 @@ const getAirplaneById = async (req, res) => {
   }
 };
 
+const getPopularLocation = async (req, res) => {
+  const { type } = req.body;
+  if (type !== "start" && type !== "dest") {
+    return res.status(400).json({ success: false, message: "Invalid type. Use 'start' or 'dest'." });
+  }
+
+  try {
+    const pool = await connectToDatabase();
+    const result = await pool
+      .request()
+      .input("locationType", type)
+      .query("EXEC usp_GetMostPopularLocation @locationType");
+
+    if (result.recordset.length === 0) {
+      return res.json({ success: true, city: "No data available" });
+    }
+
+    res.json({ success: true, city: result.recordset[0].city });
+  } catch (err) {
+    console.error("Error fetching popular location:", err);
+    res.status(500).json({ success: false, message: "Internal server error." });
+  }
+};
+
+const getFlightVsWaitTime = async (req, res) => {
+  const { type } = req.body;
+  if (type !== "flight_time" && type !== "wait_time") {
+    return res.status(400).json({ success: false, message: "Invalid type. Use 'flight_time' or 'wait_time'." });
+  }
+
+  try {
+    const pool = await connectToDatabase();
+    const result = await pool
+      .request()
+      .input("timeType", type)
+      .query("EXEC usp_FlightVsWaitTime @timeType");
+
+    if (result.recordset.length === 0) {
+      return res.json({ success: true, avg_time: 0 });
+    }
+
+    res.json({ success: true, avg_time: result.recordset[0].avg_result });
+  } catch (err) {
+    console.error("Error fetching flight vs wait time:", err);
+    res.status(500).json({ success: false, message: "Internal server error." });
+  }
+};
+
+const getFlightAnalysis = async (req, res) => {
+  try {
+    const pool = await connectToDatabase();
+    const result = await pool.query("EXEC usp_AnalyzeFlights");
+
+    if (result.recordset.length === 0) {
+      return res.json({ success: true, avg_price: 0, low_cost: 0, high_cost: 0 });
+    }
+
+    const avg_price = result.recordset[0].avg_flight_price;
+    const low_cost = result.recordset[0].flights_below_35;
+    const high_cost = result.recordset[0].flights_above_35;
+
+    res.json({ success: true, avg_price, low_cost, high_cost });
+  } catch (err) {
+    console.error("Error fetching flight analysis:", err);
+    res.status(500).json({ success: false, message: "Internal server error." });
+  }
+};
+
+const getTopDestinationsByMonth = async (req, res) => {
+  try {
+    const pool = await connectToDatabase();
+    const result = await pool.query("EXEC usp_TopDestinationsByMonth");
+
+    if (result.recordset.length === 0) {
+      return res.json({ success: true, destinations: [] });
+    }
+
+    res.json(result.recordset);
+  } catch (err) {
+    console.error("Error fetching top destinations:", err);
+    res.status(500).json({ success: false, message: "Internal server error." });
+  }
+};
+
+
 
 module.exports = {
   getAirportCodes,
@@ -835,5 +920,9 @@ module.exports = {
   updateBaggage,
   deleteBaggage,
   getFlightCategories,
-  getAirplaneById
+  getAirplaneById,
+  getPopularLocation,
+  getFlightVsWaitTime,
+  getFlightAnalysis,
+  getTopDestinationsByMonth
 };

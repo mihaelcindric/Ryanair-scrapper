@@ -23,7 +23,11 @@ const {
   updateBaggage,
   deleteBaggage,
   getFlightCategories,
-  getAirplaneById
+  getAirplaneById,
+  getPopularLocation,
+  getFlightVsWaitTime,
+  getFlightAnalysis,
+  getTopDestinationsByMonth
 } = require('../controllers/flights.controller');
 
 
@@ -50,6 +54,10 @@ router.post("/baggage/update", updateBaggage);
 router.post("/baggage/delete", deleteBaggage);
 router.post('/flights/categories', getFlightCategories);
 router.post('/getAirplaneById', getAirplaneById);
+router.post('/statistics/popular-location', getPopularLocation);
+router.post('/statistics/flight-vs-wait', getFlightVsWaitTime);
+router.get('/statistics/analyze-flights', getFlightAnalysis);
+router.get('/statistics/top-destinations', getTopDestinationsByMonth);
 
 
 module.exports = router;

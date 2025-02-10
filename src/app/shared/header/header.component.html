@@ -15,8 +15,9 @@
       <a routerLink="/auth/login" routerLinkActive="active-link" class="nav-link">Login</a>
     </ng-container>
 
-    <!-- To users, their profile is displayed -->
+    <!-- To users, statistics and their profile is displayed -->
     <ng-container *ngIf="currentUser$ | async as user">
+      <a routerLink="/flights/statistics" routerLinkActive="active-link" class="nav-link">Statistics</a>
       <div class="user-menu" (mouseenter)="toggleDropdown()" (mouseleave)="toggleDropdown()">
         <img [src]="user.profile_picture_url || 'assets/images/default-profile.png'"
              alt="Profile Picture" class="profile-picture" (error)="setDefaultProfilePicture($event)">

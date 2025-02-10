@@ -1,0 +1,55 @@
+<div class="statistics-container">
+
+  <div class="statistics-row">
+    <div class="stat-card">
+      <h3>Most Popular Start Location</h3>
+      <p>{{ popularStartLocation || 'Loading...' }}</p>
+    </div>
+    <div class="stat-card">
+      <h3>Most Popular Destination</h3>
+      <p>{{ popularDestLocation || 'Loading...' }}</p>
+    </div>
+  </div>
+
+
+  <div class="statistics-row">
+    <div class="stat-card">
+      <h3>Average Flight Time</h3>
+      <p>{{ avgFlightTime !== null ? avgFlightTime + ' min' : 'Loading...' }}</p>
+    </div>
+    <div class="stat-card">
+      <h3>Average Wait Time</h3>
+      <p>{{ avgWaitTime !== null ? avgWaitTime + ' min' : 'Loading...' }}</p>
+    </div>
+  </div>
+
+
+  <div class="statistics-row">
+    <div class="stat-card">
+      <h3>Flight Price Analysis</h3>
+      <p><strong>Avg Price:</strong> {{ avgFlightPrice !== null ? avgFlightPrice + ' €' : 'Loading...' }}</p>
+      <p><strong>Low Cost Flights:</strong> {{ lowCostFlights !== null ? lowCostFlights : 'Loading...' }}</p>
+      <p><strong>Expensive Flights:</strong> {{ highCostFlights !== null ? highCostFlights : 'Loading...' }}</p>
+    </div>
+
+    <div class="stat-card">
+      <h3>Top Destinations By Month</h3>
+      <table>
+        <thead>
+        <tr>
+          <th>Month</th>
+          <th>Destination</th>
+          <th>Travels</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr *ngFor="let dest of topDestinations">
+          <td>{{ dest.travel_month }}</td>
+          <td>{{ dest.destination_city }}</td>
+          <td>{{ dest.total_travels }}</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
