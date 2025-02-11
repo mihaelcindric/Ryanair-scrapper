@@ -1,6 +1,27 @@
 <div class="airport-connections-container">
   <h2>Airport Connections</h2>
+
   <div class="map-container">
     <div id="map"></div>
+  </div>
+
+  <div class="connections-table" *ngIf="selectedAirport">
+    <h3>Connections from {{ getAirportById(selectedAirport)?.code }}</h3>
+    <table>
+      <thead>
+      <tr>
+        <th>Code</th>
+        <th>City</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr *ngFor="let conn of connectedAirports"
+          [class.highlighted]="selectedConnection === conn.id"
+          (click)="highlightConnection(conn.id)">
+        <td>{{ conn.code }}</td>
+        <td>{{ conn.city }}</td>
+      </tr>
+      </tbody>
+    </table>
   </div>
 </div>
