@@ -43,6 +43,7 @@
 
 .connections-table tbody tr:hover {
   background-color: rgba(0, 123, 255, 0.2);
+  font-weight: bolder;
 }
 
 .connections-table tbody tr {
