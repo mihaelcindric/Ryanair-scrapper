@@ -895,7 +895,42 @@ const getTopDestinationsByMonth = async (req, res) => {
   }
 };
 
+const getAllAirports = async (req, res) => {
+  try {
+    const pool = await connectToDatabase();
+    const result = await pool.query(`
+            SELECT a.id, a.code, a.latitude, a.longitude, l.name as city
+            FROM [Sifrarnik].[Airport] a
+            JOIN [Sifrarnik].[Location] l ON a.location_id = l.id
+        `);
 
+    res.json({ success: true, airports: result.recordset });
+  } catch (err) {
+    console.error("Error fetching airports:", err);
+    res.status(500).json({ success: false, message: "Internal server error." });
+  }
+};
+
+const getAirportConnections = async (req, res) => {
+  const { id } = req.body;
+  try {
+    const pool = await connectToDatabase();
+    const result = await pool.request()
+      .input("id", id)
+      .query(`
+                SELECT a.id, a.code, a.latitude, a.longitude, l.name as city
+                FROM [IO].[Airport_Airport] aa
+                JOIN [Sifrarnik].[Airport] a ON aa.destination_id = a.id
+                JOIN [Sifrarnik].[Location] l ON a.location_id = l.id
+                WHERE aa.origin_id = @id
+            `);
+    console.log(result, "-id:", id);
+    res.json({ success: true, connections: result.recordset });
+  } catch (err) {
+    console.error("Error fetching airport connections:", err);
+    res.status(500).json({ success: false, message: "Internal server error." });
+  }
+};
 
 module.exports = {
   getAirportCodes,
@@ -924,5 +959,7 @@ module.exports = {
   getPopularLocation,
   getFlightVsWaitTime,
   getFlightAnalysis,
-  getTopDestinationsByMonth
+  getTopDestinationsByMonth,
+  getAllAirports,
+  getAirportConnections
 };

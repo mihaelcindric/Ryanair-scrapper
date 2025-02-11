@@ -11,6 +11,7 @@ import {SavedTravelsComponent} from './flights/saved-travels/saved-travels.compo
 import {GuestGuard} from './guards/guest.guard';
 import {StatisticsComponent} from './flights/statistics/statistics.component';
 import {AboutUsComponent} from './shared/about-us/about-us.component';
+import {AirportConnectionsComponent} from './flights/airport-connections/airport-connections.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/flights/search', pathMatch: 'full' },
@@ -21,6 +22,7 @@ export const routes: Routes = [
   { path: 'flights/profile', component: ProfileComponent, canActivate: [GuestGuard] },
   { path: 'flights/saved-travels', component: SavedTravelsComponent, canActivate: [GuestGuard] },
   { path: 'flights/statistics', component: StatisticsComponent, canActivate: [GuestGuard] },
+  { path: 'flights/airport-connections', component: AirportConnectionsComponent},
   { path: 'admin/dashboard', component: DashboardComponent, canActivate: [AdminGuard] },
   { path: 'shared/about-us', component: AboutUsComponent},
   { path: '**', redirectTo: 'flights/search' }

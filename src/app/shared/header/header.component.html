@@ -4,7 +4,7 @@
   </div>
   <nav class="navbar-container">
     <a routerLink="/flights/search" routerLinkActive="active-link" class="nav-link">Find Flights</a>
-
+    <a routerLink="/flights/airport-connections" routerLinkActive="active-link" class="nav-link">Airports Map</a>
     <!-- Dashboard link is displayed only to admins -->
     <ng-container *ngIf="(currentUser$ | async)?.is_admin">
       <a routerLink="/admin/dashboard" routerLinkActive="active-link" class="nav-link">Dashboard</a>

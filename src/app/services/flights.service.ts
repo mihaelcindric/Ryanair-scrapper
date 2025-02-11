@@ -123,4 +123,12 @@ export class FlightsService {
   getTopDestinationsByMonth(): Observable<any> {
     return this.http.get<any>(`${this.apiUrl}/flights/statistics/top-destinations`);
   }
+
+  getAllAirports(): Observable<any> {
+    return this.http.get(`${this.apiUrl}/flights/all-airports`);
+  }
+
+  getAirportConnections(airportId: number): Observable<any> {
+    return this.http.post(`${this.apiUrl}/flights/airport-connections`, { id: airportId }, { headers: { 'Content-Type': 'application/json' } });
+  }
 }

@@ -1,0 +1,22 @@
+.airport-connections-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+}
+
+.map-container {
+  width: 100%;
+  max-width: 1000px; /* Postavi maksimalnu širinu */
+  height: 500px; /* Postavi fiksnu visinu */
+  margin: auto;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+#map {
+  width: 100%;
+  height: 100%;
+  position: relative; /* Ovo pomaže spriječiti raspad tiles-a */
+}

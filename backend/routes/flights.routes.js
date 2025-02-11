@@ -27,7 +27,9 @@ const {
   getPopularLocation,
   getFlightVsWaitTime,
   getFlightAnalysis,
-  getTopDestinationsByMonth
+  getTopDestinationsByMonth,
+  getAllAirports,
+  getAirportConnections
 } = require('../controllers/flights.controller');
 
 
@@ -58,6 +60,7 @@ router.post('/statistics/popular-location', getPopularLocation);
 router.post('/statistics/flight-vs-wait', getFlightVsWaitTime);
 router.get('/statistics/analyze-flights', getFlightAnalysis);
 router.get('/statistics/top-destinations', getTopDestinationsByMonth);
-
+router.get('/all-airports', getAllAirports);
+router.post('/airport-connections', getAirportConnections)
 
 module.exports = router;
