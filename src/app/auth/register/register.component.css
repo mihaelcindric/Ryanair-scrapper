@@ -13,13 +13,27 @@
   background-color: white;
   border-radius: 10px;
   box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
-  padding: 30px;
+  padding: 20px;
   width: 100%;
-  max-width: 500px; /* Increased width for larger form */
+  max-width: 700px; /* Increased width for larger form */
+  max-height: 80vh;
   text-align: center;
   overflow-y: auto; /* Handle long content */
 }
 
+.form-row {
+  display: flex;
+  gap: 15px;
+}
+
+.form-row .form-group {
+  flex: 1;
+  max-width: 45%;
+}
+
+.form-group {
+  margin: 0 15px;
+}
 /* Form fields styling */
 h2 {
   margin-bottom: 20px;

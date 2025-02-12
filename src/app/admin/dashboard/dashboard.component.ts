@@ -209,6 +209,8 @@ export class DashboardComponent {
   }
 
   async insertLocations(airportData: any[]) {
+    let errorCount = 0;
+
     for (const item of airportData) {
       try {
         await this.adminService.insertRecord('Location', {
@@ -218,13 +220,22 @@ export class DashboardComponent {
         }).toPromise();
       } catch (err) {
         console.error(`Error inserting location:`, err);
+        errorCount++;
       }
     }
     console.log('Locations inserted successfully.');
+
+    if (errorCount === 0) {
+      this.showPopupMessage('Locations inserted successfully!', 'success');
+    } else {
+      this.showPopupMessage(`Inserted with ${errorCount} errors. Check logs.`, 'error');
+    }
   }
 
 
   async insertAirportRelationships(airports: any[]) {
+    let errorCount = 0;
+
     console.log("🔄 Fetching and inserting airport relationships...");
 
     for (const airport of airports) {
@@ -252,12 +263,20 @@ export class DashboardComponent {
             await this.adminService.insertAirportRelationship(originCode, destinationCode).toPromise();
             console.log(`✅ Inserted airport relationship: ${originCode} -> ${destinationCode}`);
           } catch (err) {
+            errorCount++;
             console.error(`❌ Error inserting airport relationship for ${originCode} -> ${destinationCode}:`, err);
           }
         }
       } catch (error) {
         console.error(`❌ Error fetching routes for airport ${originCode}:`, error);
+        errorCount++;
       }
+    }
+
+    if (errorCount === 0) {
+      this.showPopupMessage('Airports connections inserted successfully!', 'success');
+    } else {
+      this.showPopupMessage(`Inserted with ${errorCount} errors. Check logs.`, 'error');
     }
   }
 

@@ -10,8 +10,18 @@
       <p><strong>Last Name:</strong> {{ user?.last_name }}</p>
       <p><strong>Username:</strong> {{ user?.username }}</p>
       <p><strong>Email:</strong> {{ user?.email }}</p>
+      <p><strong>Password: </strong>
+        <span>{{ showPassword ? user?.password : (user?.password ? '*'.repeat(8) : '') }}</span>
+        <mat-icon
+          (click)="togglePasswordVisibility()"
+          class="password-toggle"
+        >
+          {{ showPassword ? 'visibility' : 'visibility_off' }}
+        </mat-icon>
+      </p>
       <p><strong>Date of Birth:</strong> {{ user?.date_of_birth | date: 'yyyy-MM-dd' }}</p>
     </div>
+
 
     <button class="edit-btn" (click)="toggleEdit()">Edit</button>
   </div>

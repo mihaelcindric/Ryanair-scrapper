@@ -9,6 +9,7 @@ export interface User {
   date_of_birth: Date;
   username: string;
   email: string;
+  password?: string;
   profile_picture_url: string;
   is_admin: boolean;
 }
@@ -29,11 +30,15 @@ export class AuthService {
   }
 
   login(email: string, password: string): Observable<any> {
-    return this.http.post<{ success: boolean; user?: User; message?: string }>(`${this.baseUrl}/auth/login`, { email, password })
+    return this.http.post<{ success: boolean; user?: User; password?: string; message?: string }>(`${this.baseUrl}/auth/login`, { email, password })
       .pipe(
         tap(response => {
           if (response.success && response.user) {
-            this.setCurrentUser(response.user);
+            const userWithDecryptedPassword: User = {
+              ...response.user,
+              password: response.password,
+            };
+            this.setCurrentUser(userWithDecryptedPassword);
           }
         })
       );

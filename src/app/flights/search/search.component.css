@@ -41,6 +41,47 @@
   min-width: 150px;
 }
 
+.form-group select {
+  max-width: 85%;
+  padding: 8px 12px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: white;
+  appearance: none;
+  height: 35px;
+}
+
+.form-group optgroup {
+  font-weight: bold;
+  background-color: #f7f7f7;
+}
+
+.form-group option {
+  font-size: 14px;
+  padding: 5px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+
+.checkbox-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Stilizacija checkboxa */
+.checkbox-group input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+}
+
+
 label {
   display: block;
   font-weight: bold;
@@ -54,6 +95,7 @@ input {
   border: 1px solid #ccc;
   border-radius: 4px;
   font-size: 14px;
+  max-width: 80%;
 }
 
 button {

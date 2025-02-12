@@ -36,8 +36,9 @@ export class AirportConnectionsComponent implements OnInit {
   private initMap(): void {
     this.map = this.L.map('map', {
       center: [48.8566, 2.3522],
-      zoom: 4
+      zoom: 4,
     });
+    this.map.setMinZoom(2);
 
     this.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap contributors'

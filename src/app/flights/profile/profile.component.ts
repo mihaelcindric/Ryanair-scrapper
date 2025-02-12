@@ -4,13 +4,15 @@ import { AuthService, User } from '../../services/auth.service';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import {FlightsService} from '../../services/flights.service';
+import {MatIconModule} from '@angular/material/icon';
 
 @Component({
   selector: 'app-profile',
   templateUrl: './profile.component.html',
   imports: [
     ReactiveFormsModule,
-    CommonModule
+    CommonModule,
+    MatIconModule
   ],
   styleUrls: ['./profile.component.css']
 })
@@ -18,6 +20,7 @@ export class ProfileComponent implements OnInit {
   user: User | null = null;
   profileForm: FormGroup;
   isEditing = false;
+  showPassword = false;
 
   // Baggage
   baggageList: any[] = [];
@@ -59,6 +62,7 @@ export class ProfileComponent implements OnInit {
       console.log("📥 Current user received in ProfileComponent:", user);
       if (user) {
         this.user = user;
+        console.log("USER DATA: ", user);
         this.profileForm.patchValue(user);
         this.loadBaggage();
       }
@@ -175,6 +179,10 @@ export class ProfileComponent implements OnInit {
     this.isAddingBaggage = false;
     this.editingBaggageId = null;
     this.baggageForm.reset({ has_tracker: false }); // Reset form
+  }
+
+  togglePasswordVisibility() {
+    this.showPassword = !this.showPassword;
   }
 
   logout(): void {

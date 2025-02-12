@@ -21,6 +21,20 @@ h2 {
   gap: 15px;
 }
 
+.password-toggle {
+  font-size: 18px;
+  color: gray;
+  cursor: pointer;
+  margin-left: 10px;
+  vertical-align: middle;
+  transition: color 0.2s ease-in-out;
+}
+
+.password-toggle:hover {
+  color: #eacd60;
+}
+
+
 .profile-picture {
   width: 80px;
   height: 80px;

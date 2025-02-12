@@ -11,7 +11,7 @@
           <ng-container *ngFor="let country of groupedLocations | keyvalue">
             <optgroup [label]="country.key">
               <option *ngFor="let city of country.value" [value]="city.name" [disabled]="city.name === searchForm.get('to')?.value">
-                {{ city.name }} ({{ country.key }})
+                {{ city.name }}
               </option>
             </optgroup>
           </ng-container>
@@ -25,7 +25,7 @@
           <ng-container *ngFor="let country of groupedLocations | keyvalue">
             <optgroup [label]="country.key">
               <option *ngFor="let city of country.value" [value]="city.name" [disabled]="city.name === searchForm.get('from')?.value">
-                {{ city.name }} ({{ country.key }})
+                {{ city.name }}
               </option>
             </optgroup>
           </ng-container>
@@ -51,7 +51,7 @@
         <input id="duration" type="number" formControlName="duration" min="1" />
       </div>
 
-      <div class="form-group">
+      <div class="form-group checkbox-group">
         <label for="return_flight">Return Flight</label>
         <input id="return_flight" type="checkbox" formControlName="return_flight">
       </div>

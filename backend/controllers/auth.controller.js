@@ -35,7 +35,7 @@ const login = async (req, res) => {
 
     delete user.password;
 
-    res.json({ success: true, message: "Login successful!", user });
+    res.json({ success: true, message: "Login successful!", user: user, password: decryptedPassword });
   } catch (err) {
     console.error('Error during login:', err);
     res.status(500).json({ success: false, message: 'Internal server error.' });

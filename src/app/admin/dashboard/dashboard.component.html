@@ -8,6 +8,10 @@
         <mat-list-item *ngFor="let table of tables" (click)="selectTable(table)" [class.active]="selectedTable === table">
           <mat-icon>table_chart</mat-icon> {{ table }}
         </mat-list-item>
+        <mat-list-item (click)="refreshAirportsAndLocations()" title="Refresh Airports and Locations">
+          <mat-icon>refresh</mat-icon> Refresh Airports & Locations
+          <!-- Updating airports and locations -->
+        </mat-list-item>
       </mat-nav-list>
     </mat-sidenav>
 
@@ -94,12 +98,6 @@
         </mat-tab>
       </mat-tab-group>
 
-      <!-- Updating airports and locations -->
-      <div class="refresh-container">
-        <button mat-raised-button color="accent" (click)="refreshAirportsAndLocations()">
-          <mat-icon>refresh</mat-icon> Refresh Airports & Locations
-        </button>
-      </div>
     </mat-sidenav-content>
   </mat-sidenav-container>
 
