@@ -17,7 +17,7 @@ const getFullTableName = (tableName) => {
     "Airport_Flight",
     "Flight_Flight_category",
     "Travel_Flight",
-    "Travel_Location",
+    "Travel_Airport",
     "User"
   ];
 
@@ -98,6 +98,12 @@ const insertRecord = async (req, res) => {
       return res.json({ success: true, message: `Location already exists, no insert needed.` });
     }
 
+    const airportDupMsg = "Violation of UNIQUE KEY constraint 'UQ_Airport_Code'";
+    if (tableName.toLowerCase() === "airport" && err.message.includes(airportDupMsg)) {
+      console.warn(`⚠️ Duplicate airport code detected, skipping insert.`);
+      return res.json({ success: true, message: `Airport already exists, no insert needed.` });
+    }
+
     console.error(`Error inserting into ${tableName}:`, err);
     res.status(500).json({ success: false, message: `Internal server error.` });
   }
@@ -152,6 +158,21 @@ const insertAirportAirport = async (req, res) => {
 
     const originId = originResult.recordset[0].id;
     const destinationId = destinationResult.recordset[0].id;
+
+    // check if already exists
+    const exists = (await pool.request()
+      .input("origin_id", origin.id)
+      .input("destination_id", dest.id)
+      .query(`
+        SELECT COUNT(*) AS cnt
+        FROM [IO].[Airport_Airport]
+        WHERE origin_id = @origin_id
+          AND destination_id = @destination_id
+      `)).recordset[0].cnt > 0;
+
+    if (exists) {
+      return res.json({ success: true, message: "Relationship already exists, skipping insert." });
+    }
 
     await pool.request()
       .input("origin_id", originId)
@@ -237,6 +258,75 @@ const updateRecord = async (req, res) => {
   }
 };
 
+const getAirportByCode = async (req, res) => {
+  const { code } = req.body;
+  if (!code) {
+    return res.status(400).json({ success: false, message: "Airport code is required." });
+  }
+  try {
+    const pool = await connectToDatabase(true);
+    const result = await pool.request()
+      .input("code", code)
+      .query(`
+        SELECT id
+        FROM [Sifrarnik].[Airport]
+        WHERE code = @code
+      `);
+
+    if (result.recordset.length > 0) {
+      return res.json({ success: true, id: result.recordset[0].id });
+    } else {
+      return res.json({ success: true, id: null });
+    }
+  } catch (err) {
+    console.error("Error in getAirportByCode:", err);
+    return res.status(500).json({ success: false, message: "Internal server error." });
+  }
+};
+
+const airportRelationExists = async (req, res) => {
+  const { originCode, destCode } = req.body;
+  if (!originCode || !destCode) {
+    return res.status(400).json({ success: false, message: "Both originCode and destCode are required." });
+  }
+  try {
+    const pool = await connectToDatabase(true);
+
+    // lookup IDs
+    const [orig] = (await pool.request()
+      .input("code", originCode)
+      .query(`SELECT id FROM [Sifrarnik].[Airport] WHERE code = @code`))
+      .recordset;
+    const [dest] = (await pool.request()
+      .input("code", destCode)
+      .query(`SELECT id FROM [Sifrarnik].[Airport] WHERE code = @code`))
+      .recordset;
+
+    if (!orig || !dest) {
+      return res.json({ success: true, exists: false });
+    }
+
+    // check existence in junction table
+    const relResult = await pool.request()
+      .input("originId", orig.id)
+      .input("destId",   dest.id)
+      .query(`
+        SELECT COUNT(*) AS cnt
+        FROM [IO].[Airport_Airport]
+        WHERE origin_id = @originId
+          AND destination_id = @destId
+      `);
+
+    const exists = relResult.recordset[0].cnt > 0;
+    return res.json({ success: true, exists });
+  } catch (err) {
+    console.error("Error in airportRelationExists:", err);
+    return res.status(500).json({ success: false, message: "Internal server error." });
+  }
+};
+
+
+
 
 
 
@@ -247,5 +337,7 @@ module.exports = {
   deleteRecord,
   getLocationByName,
   insertAirportAirport,
-  updateRecord
+  updateRecord,
+  getAirportByCode,
+  airportRelationExists
 };

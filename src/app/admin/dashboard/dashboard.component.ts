@@ -152,7 +152,7 @@ export class DashboardComponent {
     }
   }
 
-
+  // ToDo: ako zapis postoji u tablici, a vise se ne dohvaca iz API-ja, trebalo bi ga ukloniti iz tablice!!! (sada se samo dodaju novi ako vec nisu u njoj)
   refreshAirportsAndLocations() {
     const apiUrl = 'https://www.ryanair.com/api/views/locate/5/airports/en/active';
 
@@ -174,21 +174,70 @@ export class DashboardComponent {
     });
   }
 
+  /** Insert locations only if they don’t already exist */
+  async insertLocations(airportData: any[]) {
+    let errorCount = 0;
+
+    for (const item of airportData) {
+      const cityName    = item.city.name;
+      const countryName = item.country.name;
+      try {
+        const existing = await this.adminService
+          .getLocationByName(cityName, countryName).toPromise();
+
+        if (existing?.id) {
+          // already present → skip
+          continue;
+        }
+
+        await this.adminService.insertRecord('Location', {
+          name: cityName,
+          country: countryName,
+          timezone: item.timeZone
+        }).toPromise();
+      } catch (err) {
+        console.error(`Error inserting location ${cityName}, ${countryName}:`, err);
+        errorCount++;
+      }
+    }
+
+    this.showPopupMessage(
+      errorCount === 0
+        ? 'Locations refreshed successfully!'
+        : `Locations refreshed with ${errorCount} errors. Check console.`,
+      errorCount === 0 ? 'success' : 'error'
+    );
+  }
+
+  /** Insert airports only if they don’t already exist */
   async insertAirports(airportData: any[]) {
     let successCount = 0;
-    let errorCount = 0;
+    let errorCount   = 0;
 
     for (const airport of airportData) {
       try {
-        const locationResponse = await this.adminService.getLocationByName(airport.city.name, airport.country.name).toPromise();
-        const locationId = locationResponse?.id || null;
+        // 1) skip if already in DB
+        const existing = await this.adminService
+          .getAirportByCode(airport.code).toPromise();
 
+        if (existing?.id) {
+          successCount++;
+          continue;
+        }
+
+        // 2) find or insert its location first
+        const loc = await this.adminService
+          .getLocationByName(airport.city.name, airport.country.name).toPromise();
+
+        const locationId = loc?.id || null;
+
+        // 3) now insert the airport
         await this.adminService.insertRecord('Airport', {
-          code: airport.code,
-          name: airport.name,
-          url: null,
+          code:      airport.code,
+          name:      airport.name,
+          url:       null,
           location_id: locationId,
-          latitude: airport.coordinates.latitude,
+          latitude:  airport.coordinates.latitude,
           longitude: airport.coordinates.longitude
         }).toPromise();
 
@@ -199,86 +248,59 @@ export class DashboardComponent {
       }
     }
 
-    console.log('Airports inserted successfully.');
-
-    if (errorCount === 0) {
-      this.showPopupMessage('Airports inserted successfully!', 'success');
-    } else {
-      this.showPopupMessage(`Inserted with ${errorCount} errors. Check logs.`, 'error');
-    }
+    this.showPopupMessage(
+      errorCount === 0
+        ? `Airports refreshed (${successCount} new).`
+        : `Airports refreshed with ${errorCount} errors.`,
+      errorCount === 0 ? 'success' : 'error'
+    );
   }
 
-  async insertLocations(airportData: any[]) {
-    let errorCount = 0;
-
-    for (const item of airportData) {
-      try {
-        await this.adminService.insertRecord('Location', {
-          name: item.city.name,
-          country: item.country.name,
-          timezone: item.timeZone
-        }).toPromise();
-      } catch (err) {
-        console.error(`Error inserting location:`, err);
-        errorCount++;
-      }
-    }
-    console.log('Locations inserted successfully.');
-
-    if (errorCount === 0) {
-      this.showPopupMessage('Locations inserted successfully!', 'success');
-    } else {
-      this.showPopupMessage(`Inserted with ${errorCount} errors. Check logs.`, 'error');
-    }
-  }
-
-
+  /** Insert airport relationships only if they don’t already exist */
   async insertAirportRelationships(airports: any[]) {
     let errorCount = 0;
 
-    console.log("🔄 Fetching and inserting airport relationships...");
-
     for (const airport of airports) {
       const originCode = airport.code;
-      const apiUrl = `https://www.ryanair.com/api/views/locate/searchWidget/routes/en/airport/${originCode}`;
+      const routesUrl  = `https://www.ryanair.com/api/views/locate/searchWidget/routes/en/airport/${originCode}`;
 
       try {
-        const response: any = await this.http.get(apiUrl).toPromise();
-        console.log(`📊 Routes for ${originCode}:`, response);
+        const response = await this.http.get<any[]>(routesUrl).toPromise();
 
-        if (!response || !Array.isArray(response)) {
-          console.warn(`⚠️ No valid routes for ${originCode}. Skipping.`);
-          continue;
-        }
-
+        // @ts-ignore
         for (const route of response) {
-          if (!route.arrivalAirport || !route.arrivalAirport.code) {
-            console.warn("⚠️ Skipping route due to missing destination data:", route);
-            continue;
-          }
-
-          const destinationCode = route.arrivalAirport.code;
+          const destCode = route.arrivalAirport?.code;
+          if (!destCode) continue;
 
           try {
-            await this.adminService.insertAirportRelationship(originCode, destinationCode).toPromise();
-            console.log(`✅ Inserted airport relationship: ${originCode} -> ${destinationCode}`);
-          } catch (err) {
+            // skip if relationship already exists
+            const exists = await this.adminService
+              .getAirportRelationship(originCode, destCode).toPromise();
+
+            if (exists) continue;
+
+            await this.adminService
+              .insertAirportRelationship(originCode, destCode).toPromise();
+
+          } catch (relErr) {
+            console.error(`Error inserting relation ${originCode}→${destCode}:`, relErr);
             errorCount++;
-            console.error(`❌ Error inserting airport relationship for ${originCode} -> ${destinationCode}:`, err);
           }
         }
-      } catch (error) {
-        console.error(`❌ Error fetching routes for airport ${originCode}:`, error);
+      } catch (err) {
+        console.error(`Error fetching routes for ${originCode}:`, err);
         errorCount++;
       }
     }
 
-    if (errorCount === 0) {
-      this.showPopupMessage('Airports connections inserted successfully!', 'success');
-    } else {
-      this.showPopupMessage(`Inserted with ${errorCount} errors. Check logs.`, 'error');
-    }
+    this.showPopupMessage(
+      errorCount === 0
+        ? 'Airport routes refreshed successfully!'
+        : `Routes refreshed with ${errorCount} errors.`,
+      errorCount === 0 ? 'success' : 'error'
+    );
   }
+
 
 
   isFormValid(row: any): boolean {

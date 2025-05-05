@@ -343,67 +343,95 @@ const addTravel = async (req, res) => {
   const {
     total_duration,
     number_of_flights,
-    start_country,
-    destination_country,
-    start_airport,
-    destination_airport,
-    start_city,
-    destination_city,
+    start_airport,       // ovdje je code, npr. "ZAG"
+    destination_airport, // ovdje je code, npr. "WRO"
     number_of_persons,
     period_start,
     period_end
   } = req.body;
 
-  console.log(`Inserting travel record: ${start_city} (${start_country}) -> ${destination_city} (${destination_country})`);
+  console.log(`Inserting travel record: ${start_airport} -> ${destination_airport}`);
   console.log("Travel record payload:", JSON.stringify(req.body, null, 2));
 
   if (
-    total_duration === undefined || total_duration === null || total_duration <= 0 ||
-    !number_of_flights || !start_country || !start_airport ||
-    !destination_airport || !start_city || !number_of_persons || !period_start || !period_end
+    total_duration == null || total_duration <= 0 ||
+    !number_of_flights ||
+    !start_airport ||
+    !destination_airport ||
+    !number_of_persons ||
+    !period_start ||
+    !period_end
   ) {
     return res.status(400).json({ error: "Missing or invalid required travel fields." });
   }
 
   try {
     const pool = await connectToDatabase();
-    const request = pool.request();
 
-    request
+    // 1) INSERT to Travel table
+    const travelReq = pool.request();
+    travelReq
       .input('total_duration', total_duration)
       .input('number_of_flights', number_of_flights)
-      .input('start_country', start_country)
-      .input('destination_country', destination_country || null)
-      .input('start_airport', start_airport)
-      .input('destination_airport', destination_airport)
-      .input('start_city', start_city)
-      .input('destination_city', destination_city || null)
       .input('number_of_persons', number_of_persons)
       .input('period_start', period_start)
       .input('period_end', period_end);
 
-    const insertQuery = `
+    const insertTravelQ = `
       INSERT INTO [IO].Travel
-        (total_duration, number_of_flights, start_country, destination_country, start_airport, destination_airport, start_city, destination_city, number_of_persons, period_start, period_end, inserted_on)
+        (total_duration, number_of_flights, number_of_persons, period_start, period_end, inserted_on)
       VALUES
-        (@total_duration, @number_of_flights, @start_country, @destination_country, @start_airport, @destination_airport, @start_city, @destination_city, @number_of_persons, @period_start, @period_end, GETDATE());
-      SELECT SCOPE_IDENTITY() AS travelId;
+        (@total_duration, @number_of_flights, @number_of_persons, @period_start, @period_end, GETDATE());
+      SELECT CAST(SCOPE_IDENTITY() AS INT) AS travelId;
     `;
-    console.log("Executing INSERT query for Travel:");
-    console.log(insertQuery);
+    console.log("Executing INSERT Travel:", insertTravelQ);
+    const travelResult = await travelReq.query(insertTravelQ);
 
-    const result = await request.query(insertQuery);
-    console.log("Insert query result:", JSON.stringify(result, null, 2));
-    if (result.recordset.length > 0) {
-      const travelId = result.recordset[0].travelId;
-      console.log(`✅ Travel inserted with ID: ${travelId}`);
-      return res.status(201).json({
-        message: 'Travel added successfully.',
-        travelId
-      });
-    } else {
+    if (!travelResult.recordset.length) {
       return res.status(500).json({ error: 'Could not retrieve travel ID after insert.' });
     }
+    const travelId = travelResult.recordset[0].travelId;
+    console.log(`✅ Travel inserted with ID: ${travelId}`);
+
+    // 2) SELECT airport_id for start_airport
+    const startSel = await pool.request()
+      .input('code', start_airport)
+      .query(`SELECT id FROM [Sifrarnik].[Airport] WHERE code = @code`);
+    if (!startSel.recordset.length) {
+      return res.status(400).json({ error: `Unknown start airport code: ${start_airport}` });
+    }
+    const startAirportId = startSel.recordset[0].id;
+
+    // 3) SELECT airport_id for destination_airport
+    const destSel = await pool.request()
+      .input('code', destination_airport)
+      .query(`SELECT id FROM [Sifrarnik].[Airport] WHERE code = @code`);
+    if (!destSel.recordset.length) {
+      return res.status(400).json({ error: `Unknown destination airport code: ${destination_airport}` });
+    }
+    const destAirportId = destSel.recordset[0].id;
+
+    // 4) INSERT to Travel_Airport table
+    const taReq = pool.request();
+    taReq
+      .input('travel_id', travelId)
+      .input('startAirport', startAirportId)
+      .input('destAirport', destAirportId);
+
+    const insertTAQ = `
+      INSERT INTO [IO].Travel_Airport (travel_id, airport_id, type)
+      VALUES
+        (@travel_id, @startAirport, 'Start'),
+        (@travel_id, @destAirport,  'Destination');
+    `;
+    console.log("Executing INSERT Travel_Airport:", insertTAQ);
+    await taReq.query(insertTAQ);
+
+    return res.status(201).json({
+      message: 'Travel added successfully.',
+      travelId
+    });
+
   } catch (err) {
     console.error("❌ Error adding travel:", err);
     return res.status(500).json({ error: "Internal server error." });
@@ -577,29 +605,80 @@ const saveTravel = async (req, res) => {
 const getSavedTravels = async (req, res) => {
   try {
     const { user_id } = req.body;
-
     if (!user_id) {
       return res.status(400).json({ success: false, message: "User ID is required." });
     }
 
     const pool = await connectToDatabase();
-
-    const result = await pool
-      .request()
-      .input("userId", user_id)
+    const result = await pool.request()
+      .input('userId', sql.Int, user_id)
       .query(`
-        SELECT t.*
+        SELECT
+          t.id,
+          t.number_of_persons,
+          t.period_start,
+          t.period_end,
+          t.total_duration,
+          startA.code    AS start_airport,
+          startL.name    AS start_city,
+          startL.country AS start_country,
+          destA.code     AS destination_airport,
+          destL.name     AS destination_city,
+          destL.country  AS destination_country,
+          -- ukupna cijena
+          (SELECT SUM(f.price)
+           FROM [IO].[Flight] f
+           JOIN [IO].[Travel_Flight] tf ON f.id = tf.flight_id
+           WHERE tf.travel_id = t.id
+          ) AS total_price,
+          -- vrijeme leta u minutama
+          (SELECT SUM(DATEDIFF(MINUTE, f.departure_time, f.arrival_time))
+           FROM [IO].[Flight] f
+           JOIN [IO].[Travel_Flight] tf ON f.id = tf.flight_id
+           WHERE tf.travel_id = t.id
+          ) AS total_flight_time,
+          -- vrijeme čekanja u minutama
+          DATEDIFF(MINUTE, '00:00:00', t.total_duration)
+            - (SELECT SUM(DATEDIFF(MINUTE, f.departure_time, f.arrival_time))
+               FROM [IO].[Flight] f
+               JOIN [IO].[Travel_Flight] tf ON f.id = tf.flight_id
+               WHERE tf.travel_id = t.id
+              ) AS total_wait_time,
+          -- broj letova
+          (SELECT COUNT(*)
+           FROM [IO].[Travel_Flight] tf
+           WHERE tf.travel_id = t.id
+          ) AS number_of_flights,
+          -- svi aerodromi u putovanju, u redu leta
+          STUFF((
+            SELECT ' ' + NCHAR(8594) + ' ' + A2.code
+            FROM [IO].[Travel_Flight] tf2
+            JOIN [IO].[Flight] f2           ON tf2.flight_id = f2.id
+            JOIN [IO].[Airport_Flight] af2  ON f2.id = af2.flight_id
+            JOIN [Sifrarnik].[Airport] A2   ON af2.airport_id = A2.id
+            WHERE tf2.travel_id = t.id
+            GROUP BY A2.code
+            ORDER BY MIN(f2.departure_time)
+            FOR XML PATH(''), TYPE
+          ).value('.', 'NVARCHAR(MAX)'), 1, 3, '') AS all_airports_in_order
         FROM [IO].[Travel] t
-        JOIN [IO].[User_Travel] ut ON t.id = ut.travel_id
-        WHERE ut.user_id = @userId
+        JOIN [IO].[User_Travel]    ut   ON ut.travel_id = t.id AND ut.user_id = @userId
+        JOIN [IO].[Travel_Airport] tas  ON tas.travel_id = t.id AND tas.type = 'Start'
+        JOIN [Sifrarnik].[Airport] startA ON startA.id = tas.airport_id
+        JOIN [Sifrarnik].[Location] startL ON startL.id = startA.location_id
+        JOIN [IO].[Travel_Airport] tad  ON tad.travel_id = t.id AND tad.type = 'Destination'
+        JOIN [Sifrarnik].[Airport] destA  ON destA.id = tad.airport_id
+        JOIN [Sifrarnik].[Location] destL  ON destL.id = destA.location_id
+        ORDER BY t.inserted_on DESC;
       `);
 
     return res.json({ success: true, travels: result.recordset });
   } catch (err) {
     console.error("Error fetching saved travels:", err);
-    res.status(500).json({ success: false, message: "Internal server error" });
+    return res.status(500).json({ success: false, message: "Internal server error." });
   }
 };
+
 
 const removeSavedTravel = async (req, res) => {
   try {

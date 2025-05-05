@@ -7,7 +7,9 @@ const {
   deleteRecord,
   insertAirportAirport,
   getLocationByName,
-  updateRecord
+  updateRecord,
+  getAirportByCode,
+  airportRelationExists
 } = require('../controllers/admin.controller');
 
 router.post('/table-schema', getTableSchema);
@@ -17,6 +19,7 @@ router.post('/delete-record', deleteRecord);
 router.post('/airport-relationships', insertAirportAirport);
 router.get('/location/by-name', getLocationByName);
 router.put('/update-record', updateRecord);
-
+router.post('/get-airport-by-code', getAirportByCode);
+router.post('/airport-relation-exists', airportRelationExists);
 
 module.exports = router;
