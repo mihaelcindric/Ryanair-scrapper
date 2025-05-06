@@ -1,5 +1,7 @@
 const sql = require('mssql');
 
+let appRoleActivated = false;
+
 const getDbConfig = (isAdmin) => {
   return {
     user: isAdmin ? 'DB_Admin' : 'Korisnik',
@@ -39,19 +41,18 @@ const connectToDatabase = async (isAdmin = false) => {
     }
     const connection = await sql.connect(dbConfig);
 
-    let shouldSetAppRole = false;
-
     if (!isAdmin) {
       if (impersonateDemo) {
         // Impersonate
         await connection.request().query("EXECUTE AS USER = 'ryanair_scrapper_application'");
         console.log("✅ Database connection established with impersonation");
       }
-      else if (applicationRole) {
+      else if (applicationRole && !appRoleActivated) {
         // Use application role
         console.log("✅ Database connection established with Application Role APP_Uloga");
-        await connection.request().query("EXEC sp_setapprole 'APP_Uloga', 'App12345678', none");
-        shouldSetAppRole = true;
+        await connection.request()
+          .batch("EXEC sp_setapprole 'APP_Uloga','App12345678', none;");
+        appRoleActivated = true;
       }
     }
 
